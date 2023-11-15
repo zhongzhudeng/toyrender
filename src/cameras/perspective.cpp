@@ -1,3 +1,5 @@
+#include "lightwave/math.hpp"
+#include <cmath>
 #include <lightwave.hpp>
 
 namespace lightwave {
@@ -12,20 +14,22 @@ namespace lightwave {
  */
 class Perspective : public Camera {
 public:
-    Perspective(const Properties &properties)
-    : Camera(properties) {
-        NOT_IMPLEMENTED
-
-        // hints:
-        // * precompute any expensive operations here (most importantly trigonometric functions)
-        // * use m_resolution to find the aspect ratio of the image
+    Perspective(const Properties &properties) : Camera(properties) {
+        aspect_ratio_inv = (float)m_resolution.y() / m_resolution.x();
+        auto fovAxis = properties.get<std::string>("fovAxis");
+        auto fov = properties.get<float>("fov");
+        if (fovAxis == "x")
+            z = 1.f / std::tan(Deg2Rad * fov / 2);
+        else
+            z = aspect_ratio_inv / std::tan(Deg2Rad * fov / 2);
     }
 
     CameraSample sample(const Point2 &normalized, Sampler &rng) const override {
-        NOT_IMPLEMENTED
-
-        // hints:
-        // * use m_transform to transform the local camera coordinate system into the world coordinate system
+        auto ray_cam =
+            Ray(Vector({0.f, 0.f, 0.f}),
+                Vector({normalized.x(), normalized.y() * aspect_ratio_inv, z}));
+        auto ray_world = m_transform->apply(ray_cam).normalized();
+        return CameraSample{.ray = ray_world, .weight = Color(1.0f)};
     }
 
     std::string toString() const override {
@@ -37,9 +41,11 @@ public:
             "]",
             m_resolution.x(),
             m_resolution.y(),
-            indent(m_transform)
-        );
+            indent(m_transform));
     }
+
+private:
+    float aspect_ratio_inv, z;
 };
 
 }

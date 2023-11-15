@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <lightwave.hpp>
 
 #include "../core/plyparser.hpp"
 #include "accel.hpp"
+#include "lightwave/math.hpp"
 
 namespace lightwave {
 
@@ -30,12 +32,73 @@ class TriangleMesh : public AccelerationStructure {
     bool m_smoothNormals;
 
 protected:
-    int numberOfPrimitives() const override {
-        return int(m_triangles.size());
-    }
+    int numberOfPrimitives() const override { return int(m_triangles.size()); }
 
-    bool intersect(int primitiveIndex, const Ray &ray, Intersection &its, Sampler &rng) const override {
-        NOT_IMPLEMENTED
+    bool intersect(int primitiveIndex, const Ray &ray, Intersection &its,
+                   Sampler &rng) const override {
+        auto vi = m_triangles[primitiveIndex];
+        auto vert0 = m_vertices[vi[0]], vert1 = m_vertices[vi[1]],
+             vert2 = m_vertices[vi[2]];
+        auto edge1 = vert1.position - vert0.position,
+             edge2 = vert2.position - vert0.position;
+
+        auto pvec = ray.direction.cross(edge2);
+        auto det = edge1.dot(pvec);
+        /*
+        if (det < Epsilon)
+            return false;
+        auto tvec = ray.origin - vert0.position;
+
+        auto u = tvec.dot(pvec);
+        if (u < 0.f || u > det)
+            return false;
+
+        auto qvec = tvec.cross(edge1);
+        auto v = ray.direction.dot(qvec);
+        if (v < 0.f || u + v > det)
+            return false;
+
+        auto t = edge2.dot(qvec);
+        auto inv_det = 1.0f / det;
+
+        t *= inv_det;
+        u *= inv_det;
+        v *= inv_det;
+        */
+        if (det > -Epsilon && det < Epsilon)
+            return false;
+        auto inv_det = 1.f / det;
+
+        auto tvec = ray.origin - vert0.position;
+
+        auto u = tvec.dot(pvec) * inv_det;
+        if (u < 0.f || u > 1.f)
+            return false;
+
+        auto qvec = tvec.cross(edge1);
+        auto v = ray.direction.dot(qvec) * inv_det;
+        if (v < 0.f || u + v > 1.f)
+            return 0;
+
+        auto t = edge2.dot(qvec) * inv_det;
+
+        if (its.t < t)
+            return false;
+
+        its.t = t;
+        if (m_smoothNormals) {
+            auto itp = Vertex::interpolate(Vector2(u, v), vert0, vert1, vert2);
+            its.frame.normal = itp.normal.normalized();
+            its.position = itp.position;
+        } else {
+            its.frame.normal = edge1.cross(edge2).normalized();
+            its.position = ray(t);
+        }
+        its.frame.tangent = edge1.normalized();
+        its.frame.bitangent =
+            its.frame.normal.cross(its.frame.tangent).normalized();
+
+        return true;
 
         // hints:
         // * use m_triangles[primitiveIndex] to get the vertex indices of the triangle that should be intersected
@@ -45,11 +108,26 @@ protected:
     }
 
     Bounds getBoundingBox(int primitiveIndex) const override {
-        NOT_IMPLEMENTED
+        auto vi = m_triangles[primitiveIndex];
+        auto v_0 = m_vertices[vi[0]].position, v_1 = m_vertices[vi[1]].position,
+             v_2 = m_vertices[vi[2]].position;
+        Point min, max;
+        for (int i = 0; i < 3; i++) {
+            min[i] = std::min({v_0[i], v_1[i], v_2[i]});
+            max[i] = std::max({v_0[i], v_1[i], v_2[i]});
+        }
+        return Bounds(min, max);
     }
 
     Point getCentroid(int primitiveIndex) const override {
-        NOT_IMPLEMENTED
+        auto vi = m_triangles[primitiveIndex];
+        auto v_0 = m_vertices[vi[0]].position, v_1 = m_vertices[vi[1]].position,
+             v_2 = m_vertices[vi[2]].position;
+        Point centroid;
+        for (int i = 0; i < 3; i++) {
+            centroid[i] = (v_0[i] + v_1[i] + v_2[i]) / 3;
+        }
+        return centroid;
     }
 
 public:
@@ -57,17 +135,16 @@ public:
         m_originalPath = properties.get<std::filesystem::path>("filename");
         m_smoothNormals = properties.get<bool>("smooth", true);
         readPLY(m_originalPath.string(), m_triangles, m_vertices);
-        logger(EInfo, "loaded ply with %d triangles, %d vertices",
-            m_triangles.size(),
-            m_vertices.size()
-        );
+        logger(EInfo,
+               "loaded ply with %d triangles, %d vertices",
+               m_triangles.size(),
+               m_vertices.size());
         buildAccelerationStructure();
     }
 
-    AreaSample sampleArea(Sampler &rng) const override {
+    AreaSample sampleArea(Sampler &rng) const override{
         // only implement this if you need triangle mesh area light sampling for your rendering competition
-        NOT_IMPLEMENTED
-    }
+        NOT_IMPLEMENTED}
 
     std::string toString() const override {
         return tfm::format(
@@ -78,8 +155,7 @@ public:
             "]",
             m_vertices.size(),
             m_triangles.size(),
-            m_originalPath.generic_string()
-        );
+            m_originalPath.generic_string());
     }
 };
 

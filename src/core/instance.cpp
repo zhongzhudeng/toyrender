@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <lightwave/core.hpp>
 #include <lightwave/instance.hpp>
 #include <lightwave/registry.hpp>
@@ -11,9 +12,24 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
     // * if m_flipNormal is true, flip the direction of the bitangent (which in effect flips the normal)
     // * make sure that the frame is orthonormal (you are free to change the bitangent for this, but keep
     //   the direction of the transformed tangent the same)
+    surf.position = m_transform->apply(surf.position);
+
+    surf.frame.tangent = m_transform->apply(surf.frame.tangent).normalized();
+    surf.frame.bitangent =
+        m_transform->apply(surf.frame.bitangent).normalized();
+    if (m_flipNormal) {
+        surf.frame.bitangent = -surf.frame.bitangent;
+    }
+
+    surf.frame.normal =
+        surf.frame.tangent.cross(surf.frame.bitangent).normalized();
+
+    surf.frame.bitangent =
+        surf.frame.normal.cross(surf.frame.tangent).normalized();
 }
 
-bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) const {
+bool Instance::intersect(const Ray &worldRay, Intersection &its,
+                         Sampler &rng) const {
     if (!m_transform) {
         // fast path, if no transform is needed
         Ray localRay = worldRay;
@@ -24,8 +40,10 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
     }
 
     const float previousT = its.t;
-    Ray localRay;
-    NOT_IMPLEMENTED
+    Ray localRay = m_transform->inverse(worldRay);
+    const float scale = localRay.direction.length();
+    its.t = its.t * scale;
+    localRay = localRay.normalized();
 
     // hints:
     // * transform the ray (do not forget to normalize!)
@@ -35,6 +53,7 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its, Sampler &rng) c
     if (wasIntersected) {
         // hint: how does its.t need to change?
 
+        its.t = its.t / scale;
         its.instance = this;
         transformFrame(its);
     } else {
