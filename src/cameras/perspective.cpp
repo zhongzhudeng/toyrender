@@ -27,7 +27,7 @@ public:
     CameraSample sample(const Point2 &normalized, Sampler &rng) const override {
         auto ray_cam =
             Ray(Vector(0.f, 0.f, 0.f),
-                Vector({normalized.x(), normalized.y() * aspect_ratio_inv, z}));
+                Vector(normalized.x(), normalized.y() * aspect_ratio_inv, z));
         auto ray_world = m_transform->apply(ray_cam).normalized();
         return CameraSample{.ray = ray_world, .weight = Color(1.0f)};
     }
