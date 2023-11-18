@@ -53,7 +53,9 @@ function(add_extra_options TARGET)
 endfunction()
 
 # Extract all source files inside the directory src/
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/**/*.cpp" "src/**/*.hpp" "include/*.hpp")
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/**/*.cpp" "src/**/*.hpp" "include/*.hpp"
+    "features/**/*.cpp"
+    )
 
 # ######################
 set(MY_TARGET_NAME redshift) # Change `unnamed` to your favourite own executable name
