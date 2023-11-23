@@ -12,14 +12,16 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
-        NOT_IMPLEMENTED
+        auto wi = squareToCosineHemisphere(rng.next2D());
+        return BsdfSample{.wi = wi, .weight = m_albedo->evaluate(uv)};
     }
 
     std::string toString() const override {
-        return tfm::format("Diffuse[\n"
-                           "  albedo = %s\n"
-                           "]",
-                           indent(m_albedo));
+        return tfm::format(
+            "Diffuse[\n"
+            "  albedo = %s\n"
+            "]",
+            indent(m_albedo));
     }
 };
 

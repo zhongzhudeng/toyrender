@@ -44,28 +44,8 @@ protected:
 
         auto pvec = ray.direction.cross(edge2);
         auto det = edge1.dot(pvec);
-        /*
-        if (det < Epsilon)
-            return false;
-        auto tvec = ray.origin - vert0.position;
 
-        auto u = tvec.dot(pvec);
-        if (u < 0.f || u > det)
-            return false;
-
-        auto qvec = tvec.cross(edge1);
-        auto v = ray.direction.dot(qvec);
-        if (v < 0.f || u + v > det)
-            return false;
-
-        auto t = edge2.dot(qvec);
-        auto inv_det = 1.0f / det;
-
-        t *= inv_det;
-        u *= inv_det;
-        v *= inv_det;
-        */
-        if (det > -Epsilon && det < Epsilon)
+        if (det > 1e-8 && det < 1e-8)
             return false;
         auto inv_det = 1.f / det;
 
@@ -82,29 +62,25 @@ protected:
 
         auto t = edge2.dot(qvec) * inv_det;
 
-        if (its.t < t)
+        if (t < Epsilon || its.t < t)
             return false;
 
         its.t = t;
+        auto itp = Vertex::interpolate(Vector2(u, v), vert0, vert1, vert2);
+        its.uv = itp.texcoords;
         if (m_smoothNormals) {
-            auto itp = Vertex::interpolate(Vector2(u, v), vert0, vert1, vert2);
             its.frame.normal = itp.normal.normalized();
             its.position = itp.position;
         } else {
             its.frame.normal = edge1.cross(edge2).normalized();
             its.position = ray(t);
         }
-        its.frame.tangent = edge1.normalized();
-        its.frame.bitangent =
-            its.frame.normal.cross(its.frame.tangent).normalized();
+        its.frame = Frame(its.frame.normal);
+        // its.frame.tangent = edge1.normalized();
+        // its.frame.bitangent =
+        //     its.frame.normal.cross(its.frame.tangent).normalized();
 
         return true;
-
-        // hints:
-        // * use m_triangles[primitiveIndex] to get the vertex indices of the triangle that should be intersected
-        // * if m_smoothNormals is true, interpolate the vertex normals from m_vertices
-        //   * make sure that your shading frame stays orthonormal!
-        // * if m_smoothNormals is false, use the geometrical normal (can be computed from the vertex positions)
     }
 
     Bounds getBoundingBox(int primitiveIndex) const override {

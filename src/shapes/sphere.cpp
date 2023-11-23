@@ -1,17 +1,6 @@
-#include "lightwave/math.hpp"
-#include <cmath>
 #include <lightwave.hpp>
 namespace lightwave {
 class Sphere : public Shape {
-
-    inline void populate(SurfaceEvent &surf, const Point &position) const {
-        surf.position = position;
-        // TODO: uv
-        surf.frame.normal = position - Point(0, 0, 0);
-        surf.frame.tangent = Vector(0, 1, 0).cross(surf.frame.normal).normalized();
-        surf.frame.bitangent = surf.frame.normal.cross(surf.frame.tangent).normalized();
-        // TODO: pdf
-    }
 
 public:
     Sphere(const Properties &properties) {}
@@ -20,10 +9,13 @@ public:
                    Sampler &rng) const override {
 
         auto o_r = ray.origin - Point(0.f, 0.f, 0.f);
+        if (std::abs(o_r.length() - 1) < Epsilon)
+            return false;
+
         float b = 2 * o_r.dot(ray.direction);
 
         const float delta = b * b - 4 * o_r.lengthSquared() + 4;
-        if (delta < 0)
+        if (delta < Epsilon)
             return false;
 
         float t = (-b - std::sqrt(delta)) / 2;
@@ -35,8 +27,16 @@ public:
         if (its.t < t)
             return false;
         its.t = t;
-        const Point position = ray(t);
-        populate(its, position);
+        its.position = ray(t);
+        its.frame.normal = its.position - Point(0);
+        its.frame = Frame(its.frame.normal);
+        float theta = std::acos(its.position.y());
+        float phi =
+            std::acos(its.position.x() /
+                      std::sqrt(1 - its.position.y() * its.position.y()));
+        phi = its.position.z() > 0 ? -phi : phi;
+        its.uv.x() = phi * Inv2Pi + 0.5;
+        its.uv.y() = theta * InvPi;
         return true;
     }
 
@@ -46,11 +46,19 @@ public:
 
     Point getCentroid() const override { return Point(0); }
 
-    AreaSample sampleArea(Sampler &rng) const override{NOT_IMPLEMENTED}
-
-    std::string toString() const override {
-        return "Sphere[]";
+    AreaSample sampleArea(Sampler &rng) const override {
+        Point2 rnd = rng.next2D();
+        AreaSample sample;
+        sample.position = squareToUniformSphere(rnd);
+        sample.frame.normal = sample.position - Point(0);
+        sample.frame = Frame(sample.frame.normal);
+        sample.uv.x() = rnd.x();
+        sample.uv.y() = -rnd.y();
+        sample.pdf = Inv4Pi;
+        return sample;
     }
+
+    std::string toString() const override { return "Sphere[]"; }
 };
 }
 REGISTER_SHAPE(Sphere, "sphere")

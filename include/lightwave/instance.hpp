@@ -32,6 +32,7 @@ class Instance : public Shape {
     ref<Transform> m_transform;
     /// @brief Flip the normal direction, used to correct for the change of handedness in case the transformation mirrors the object.
     bool m_flipNormal;
+    ref<Texture> m_normal;
     /// @brief Tracks whether this instance has been added to the scene, i.e., could be hit by ray tracing.
     bool m_visible;
     
@@ -51,6 +52,7 @@ public:
         if (m_transform && m_transform->determinant() < 0) {
             m_flipNormal = !m_flipNormal;
         }
+        m_normal = properties.get<Texture>("normal", nullptr);
     }
 
     /// @brief Returns the material that the shape should be rendered with (can be null for non-reflecting objects).

@@ -8,12 +8,12 @@ class ThinLens : public Camera {
 public:
     ThinLens(const Properties &properties) : Camera(properties) {
         aspect_ratio_inv = (float)m_resolution.y() / m_resolution.x();
-        auto fovAxis = properties.get<std::string>("fovAxis");
-        auto fov = properties.get<float>("fov");
-        if (fovAxis == "x")
-            z = 1.f / std::tan(Deg2Rad * fov / 2);
+        m_fovAxis = properties.get<std::string>("fovAxis");
+        m_fov = properties.get<float>("fov");
+        if (m_fovAxis == "x")
+            z = 1.f / std::tan(Deg2Rad * m_fov / 2);
         else
-            z = aspect_ratio_inv / std::tan(Deg2Rad * fov / 2);
+            z = aspect_ratio_inv / std::tan(Deg2Rad * m_fov / 2);
         lens_radius = properties.get<float>("lensRadius", 1);
         focal_distance = properties.get<float>("focalDistance", 1);
     }
@@ -43,15 +43,22 @@ public:
             "ThinLens[\n"
             "  width = %d,\n"
             "  height = %d,\n"
+            "  fovAxis = %s,n"
             "  transform = %s,\n"
+            "  lensRadius = %4.2f,\n"
+            "  focalDistance = %4.2f,\n"
             "]",
             m_resolution.x(),
             m_resolution.y(),
-            indent(m_transform));
+            m_fovAxis,
+            indent(m_transform),
+            lens_radius,
+            focal_distance);
     }
 
 private:
-    float aspect_ratio_inv, z;
+    std::string m_fovAxis;
+    float m_fov, aspect_ratio_inv, z;
     float lens_radius, focal_distance;
 };
 

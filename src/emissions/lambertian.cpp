@@ -11,14 +11,15 @@ public:
     }
 
     EmissionEval evaluate(const Point2 &uv, const Vector &wo) const override {
-        NOT_IMPLEMENTED
+        return EmissionEval{.value = m_emission->evaluate(uv)};
     }
 
     std::string toString() const override {
-        return tfm::format("Lambertian[\n"
-                           "  emission = %s\n"
-                           "]",
-                           indent(m_emission));
+        return tfm::format(
+            "Lambertian[\n"
+            "  emission = %s\n"
+            "]",
+            indent(m_emission));
     }
 };
 

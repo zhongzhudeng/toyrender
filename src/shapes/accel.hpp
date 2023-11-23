@@ -71,6 +71,11 @@ class AccelerationStructure : public Shape {
         }
     };
 
+    struct Bin {
+        Bounds bound=Bounds::empty();
+        size_t count = 0;
+    };
+
     /// @brief A list of all BVH nodes.
     std::vector<Node> m_nodes;
     /**
@@ -89,6 +94,8 @@ class AccelerationStructure : public Shape {
         // by convention, this is always the first element of m_nodes
         return m_nodes.front();
     }
+
+    std::vector<Point> centroids;
 
     /**
      * @brief Intersects a BVH node, recursing into children (for internal
@@ -183,7 +190,85 @@ class AccelerationStructure : public Shape {
     }
 
     NodeIndex binning(Node &node, int splitAxis) {
-        NOT_IMPLEMENTED
+        static constexpr size_t BINS = 8;
+        float b_min, b_max, cost, best_cost = Infinity, split_pos;
+
+        Bounds cent_b=Bounds::empty();
+        for (NodeIndex i = 0; i < node.primitiveCount; i++)
+            cent_b.extend(centroids[node.leftFirst + i]);
+        int best_i;
+        float aabb_cent, best_aabb_cent = Infinity;
+        for (int i = 0; i < 3; i++) {
+            aabb_cent = (node.aabb.max()[i] - node.aabb.min()[i]) /
+                        (cent_b.max()[i] - cent_b.min()[i]);
+            if (best_aabb_cent > aabb_cent ) {
+                best_i = i;
+                best_aabb_cent = aabb_cent;
+            }
+        }
+        
+        if (best_aabb_cent > BINS){
+            // logger(EInfo, "split randomly with size %d", node.primitiveCount);
+            return node.primitiveCount / 2 + node.leftFirst;
+        }
+
+        
+        splitAxis = best_i;
+        b_min = cent_b.min()[splitAxis], b_max = cent_b.max()[splitAxis];
+
+        Bin bin[BINS];
+        float scale = BINS / (b_max - b_min);
+
+        for (NodeIndex i = 0; i < node.primitiveCount; i++) {
+            auto idx = m_primitiveIndices[node.leftFirst + i];
+            float centroid = centroids[node.leftFirst + i][splitAxis];
+            auto aabb = getBoundingBox(idx);
+            size_t bin_idx =
+                std::min(BINS - 1, (size_t)((centroid - b_min) * scale));
+            bin[bin_idx].bound.extend(aabb);
+            bin[bin_idx].count++;
+        }
+
+        float l_a[BINS - 1], r_a[BINS - 1];
+        size_t l_cnt[BINS - 1], r_cnt[BINS - 1];
+        size_t l_sum = 0, r_sum = 0;
+        Bounds l_b = Bounds::empty(), r_b = Bounds::empty();
+
+        for (size_t i = 0; i < BINS - 1; i++) {
+            l_b.extend(bin[i].bound);
+            l_a[i] = surfaceArea(l_b);
+            l_sum += bin[i].count;
+            l_cnt[i] = l_sum;
+
+            r_b.extend(bin[BINS - 1 - i].bound);
+            r_a[BINS - 2 - i] = surfaceArea(r_b);
+            r_sum += bin[BINS - 1 - i].count;
+            r_cnt[BINS - 2 - i] = r_sum;
+        }
+        scale = (b_max - b_min) / BINS;
+
+        for (size_t i = 0; i < BINS - 1; i++) {
+            assert(l_cnt[i] + r_cnt[i] == (size_t)node.primitiveCount);
+            cost = l_cnt[i] * l_a[i] + r_cnt[i] * r_a[i];
+            if (cost < best_cost) {
+                split_pos = b_min + scale * (i + 1);
+                best_cost = cost;
+            }
+        }
+
+        NodeIndex firstRightIndex = node.leftFirst,
+                  lastLeftIndex = node.lastPrimitiveIndex();
+        while (firstRightIndex <= lastLeftIndex) {
+            if (centroids[firstRightIndex][splitAxis] <= split_pos) {
+                firstRightIndex++;
+            } else {
+                std::swap(centroids[firstRightIndex], centroids[lastLeftIndex]);
+                std::swap(m_primitiveIndices[firstRightIndex],
+                          m_primitiveIndices[lastLeftIndex--]);
+            }
+        }
+
+        return firstRightIndex;
     }
 
     /// @brief Attempts to subdivide a given BVH node.
@@ -198,7 +283,7 @@ class AccelerationStructure : public Shape {
         const NodeIndex firstPrimitive = parent.firstPrimitiveIndex();
 
         // set to true when implementing binning
-        static constexpr bool UseSAH = false;
+        static constexpr bool UseSAH = true;
 
         // the point at which to split (note that primitives must be re-ordered
         // so that all children of the left node will have a smaller index than
@@ -286,7 +371,14 @@ protected:
         root.leftFirst      = 0;
         root.primitiveCount = numberOfPrimitives();
         computeAABB(root);
+        // in SAH we need to access centroids 2 times, so we precompute them
+        centroids = std::vector<Point>(root.primitiveCount);
+        for (NodeIndex i = 0; i < root.primitiveCount; i++) {
+            auto idx = m_primitiveIndices[i];
+            centroids[i] = getCentroid(idx);
+        }
         subdivide(root);
+        centroids.clear();
 
         logger(EInfo, "built BVH with %ld nodes for %ld primitives in %.1f ms",
                m_nodes.size(), numberOfPrimitives(),

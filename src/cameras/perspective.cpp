@@ -1,6 +1,7 @@
 #include "lightwave/math.hpp"
 #include <cmath>
 #include <lightwave.hpp>
+#include <stdexcept>
 
 namespace lightwave {
 
@@ -20,8 +21,10 @@ public:
         auto fov = properties.get<float>("fov");
         if (fovAxis == "x")
             z = 1.f / std::tan(Deg2Rad * fov / 2);
-        else
+        else if (fovAxis == "y")
             z = aspect_ratio_inv / std::tan(Deg2Rad * fov / 2);
+        else
+            throw std::runtime_error("Invalid fovAxis: " + fovAxis);
     }
 
     CameraSample sample(const Point2 &normalized, Sampler &rng) const override {
