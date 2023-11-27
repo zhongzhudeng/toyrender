@@ -30,10 +30,12 @@ public:
         its.position = ray(t);
         its.frame.normal = its.position - Point(0);
         its.frame = Frame(its.frame.normal);
-        float theta = std::acos(its.position.y());
-        float phi =
-            std::acos(its.position.x() /
-                      std::sqrt(1 - its.position.y() * its.position.y()));
+        float theta = std::acos(std::clamp(its.position.y(), -1.0f, 1.0f));
+        float phi = std::acos(
+            std::clamp(its.position.x() /
+                           std::sqrt(1 - its.position.y() * its.position.y()),
+                       -1.0f,
+                       1.0f));
         phi = its.position.z() > 0 ? -phi : phi;
         its.uv.x() = phi * Inv2Pi + 0.5;
         its.uv.y() = theta * InvPi;
