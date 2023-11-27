@@ -96,6 +96,7 @@ class AccelerationStructure : public Shape {
     }
 
     std::vector<Point> centroids;
+    std::vector<Bounds> aabbs;
 
     /**
      * @brief Intersects a BVH node, recursing into children (for internal
@@ -176,8 +177,7 @@ class AccelerationStructure : public Shape {
     void computeAABB(Node &node) {
         node.aabb = Bounds::empty();
         for (NodeIndex i = 0; i < node.primitiveCount; i++) {
-            const Bounds childAABB =
-                getBoundingBox(m_primitiveIndices[node.leftFirst + i]);
+            const Bounds childAABB = aabbs[node.leftFirst + i];
             node.aabb.extend(childAABB);
         }
     }
@@ -196,6 +196,8 @@ class AccelerationStructure : public Shape {
         Bounds cent_b=Bounds::empty();
         for (NodeIndex i = 0; i < node.primitiveCount; i++)
             cent_b.extend(centroids[node.leftFirst + i]);
+
+        // might be better if we don't split along longest axis of aabb
         int best_i;
         float aabb_cent, best_aabb_cent = Infinity;
         for (int i = 0; i < 3; i++) {
@@ -207,12 +209,6 @@ class AccelerationStructure : public Shape {
             }
         }
         
-        if (best_aabb_cent > BINS){
-            // logger(EInfo, "split randomly with size %d", node.primitiveCount);
-            return node.primitiveCount / 2 + node.leftFirst;
-        }
-
-        
         splitAxis = best_i;
         b_min = cent_b.min()[splitAxis], b_max = cent_b.max()[splitAxis];
 
@@ -220,9 +216,8 @@ class AccelerationStructure : public Shape {
         float scale = BINS / (b_max - b_min);
 
         for (NodeIndex i = 0; i < node.primitiveCount; i++) {
-            auto idx = m_primitiveIndices[node.leftFirst + i];
             float centroid = centroids[node.leftFirst + i][splitAxis];
-            auto aabb = getBoundingBox(idx);
+            auto aabb = aabbs[node.leftFirst + i];
             size_t bin_idx =
                 std::min(BINS - 1, (size_t)((centroid - b_min) * scale));
             bin[bin_idx].bound.extend(aabb);
@@ -248,7 +243,6 @@ class AccelerationStructure : public Shape {
         scale = (b_max - b_min) / BINS;
 
         for (size_t i = 0; i < BINS - 1; i++) {
-            assert(l_cnt[i] + r_cnt[i] == (size_t)node.primitiveCount);
             cost = l_cnt[i] * l_a[i] + r_cnt[i] * r_a[i];
             if (cost < best_cost) {
                 split_pos = b_min + scale * (i + 1);
@@ -263,6 +257,7 @@ class AccelerationStructure : public Shape {
                 firstRightIndex++;
             } else {
                 std::swap(centroids[firstRightIndex], centroids[lastLeftIndex]);
+                std::swap(aabbs[firstRightIndex], aabbs[lastLeftIndex]);
                 std::swap(m_primitiveIndices[firstRightIndex],
                           m_primitiveIndices[lastLeftIndex--]);
             }
@@ -370,15 +365,19 @@ protected:
         auto &root          = m_nodes.emplace_back();
         root.leftFirst      = 0;
         root.primitiveCount = numberOfPrimitives();
-        computeAABB(root);
-        // in SAH we need to access centroids 2 times, so we precompute them
+
+        // precompute bounding boxes
         centroids = std::vector<Point>(root.primitiveCount);
+        aabbs = std::vector<Bounds>(root.primitiveCount);
         for (NodeIndex i = 0; i < root.primitiveCount; i++) {
-            auto idx = m_primitiveIndices[i];
-            centroids[i] = getCentroid(idx);
+            centroids[i] = getCentroid(i);
+            aabbs[i] = getBoundingBox(i);
         }
+
+        computeAABB(root);
         subdivide(root);
         centroids.clear();
+        aabbs.clear();
 
         logger(EInfo, "built BVH with %ld nodes for %ld primitives in %.1f ms",
                m_nodes.size(), numberOfPrimitives(),

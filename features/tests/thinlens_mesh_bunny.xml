@@ -16,7 +16,7 @@
             </camera>
 
             <instance>
-                <shape type="mesh" filename="../../../tests/meshes/bunny.ply"/>
+                <shape type="mesh" filename="../../tests/meshes/bunny.ply"/>
             </instance>
         </scene>
         <sampler type="independent" count="256"/>
