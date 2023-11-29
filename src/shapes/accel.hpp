@@ -190,7 +190,7 @@ class AccelerationStructure : public Shape {
     }
 
     NodeIndex binning(Node &node, int splitAxis) {
-        static constexpr size_t BINS = 8;
+        static constexpr size_t BINS = 16;
         float b_min, b_max, cost, best_cost = Infinity, split_pos;
 
         Bounds cent_b=Bounds::empty();

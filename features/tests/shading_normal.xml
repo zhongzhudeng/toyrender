@@ -17,7 +17,7 @@
             <instance>
                 <shape type="sphere" />
                 <emission type="lambertian">
-                    <texture name="emission" type="constant" value="2,0.5,0.1" />
+                    <texture name="emission" type="constant" value="3,0.5,0.1" />
                 </emission>
                 <transform>
                     <scale value="1" />
@@ -38,7 +38,7 @@
             <instance>
                 <shape type="rectangle" />
                 <bsdf type="diffuse">
-                    <texture name="albedo" type="constant" value="1" />
+                    <texture name="albedo" type="image" filename="textures/brick_wall_basecolor.jpg" />
                 </bsdf>
                 <transform>
                     <scale value="2" />
@@ -47,6 +47,6 @@
                 <texture name="normal" type="normal" filename="textures/brick_wall_normal.jpg" />
             </instance>
         </scene>
-        <sampler type="independent" count="1024" />
+        <sampler type="independent" count="128" />
     </integrator>
 </test>
