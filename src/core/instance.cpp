@@ -35,8 +35,10 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its,
         Ray localRay = worldRay;
         if (m_shape->intersect(localRay, its, rng)) {
             its.instance = this;
+            return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     const float previousT = its.t;
@@ -50,11 +52,11 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its,
         its.t = its.t / scale;
         its.instance = this;
         transformFrame(its);
+        return true;
     } else {
         its.t = previousT;
+        return false;
     }
-
-    return false;
 }
 
 Bounds Instance::getBoundingBox() const {
