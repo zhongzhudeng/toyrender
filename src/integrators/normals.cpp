@@ -5,7 +5,7 @@
 
 namespace lightwave {
 
-class NormalsIntegrator : public SamplingIntegrator {
+class NormalsIntegrator final: public SamplingIntegrator {
     bool m_remap;
     ref<Scene> m_scene;
 

@@ -4,7 +4,7 @@
 
 namespace lightwave {
 
-class ThinLens : public Camera {
+class ThinLens final: public Camera {
 public:
     ThinLens(const Properties &properties) : Camera(properties) {
         aspect_ratio_inv = (float)m_resolution.y() / m_resolution.x();

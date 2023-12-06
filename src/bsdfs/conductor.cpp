@@ -2,7 +2,7 @@
 
 namespace lightwave {
 
-class Conductor : public Bsdf {
+class Conductor final: public Bsdf {
     ref<Texture> m_reflectance;
 
 public:
@@ -20,7 +20,8 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
-        NOT_IMPLEMENTED
+        return BsdfSample{.wi = reflect(wo, Vector(0, 0, 1)),
+                          .weight = m_reflectance->evaluate(uv)};
     }
 
     std::string toString() const override {

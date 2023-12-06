@@ -2,7 +2,7 @@
 
 namespace lightwave {
 
-class BVHPerformance : public SamplingIntegrator {
+class BVHPerformance final: public SamplingIntegrator {
     float m_unit;
 
 public:

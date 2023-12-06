@@ -12,7 +12,7 @@ namespace lightwave {
  * jittered sampling or blue noise sampling).
  * @see Internally, this sampler uses the PCG32 library to generate random numbers.
  */
-class Independent : public Sampler {
+class Independent final: public Sampler {
     uint64_t m_seed;
     pcg32 m_pcg;
 

@@ -2,7 +2,7 @@
 
 namespace lightwave {
 
-class ConstantTexture : public Texture {
+class ConstantTexture final: public Texture {
     Color m_value;
 
 public:

@@ -1,5 +1,3 @@
-#include "lightwave/math.hpp"
-#include <cmath>
 #include <lightwave.hpp>
 #include <stdexcept>
 
@@ -13,7 +11,7 @@ namespace lightwave {
  * direction ( @code ray.direction.x < 0 ), and pixels at the bottom of the image ( @code normalized.y < 0 @endcode )
  * are directed in negative y direction ( @code ray.direction.y < 0 ).
  */
-class Perspective : public Camera {
+class Perspective final: public Camera {
 public:
     Perspective(const Properties &properties) : Camera(properties) {
         aspect_ratio_inv = (float)m_resolution.y() / m_resolution.x();

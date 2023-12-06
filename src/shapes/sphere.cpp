@@ -1,6 +1,6 @@
 #include <lightwave.hpp>
 namespace lightwave {
-class Sphere : public Shape {
+class Sphere final: public Shape {
 
 public:
     Sphere(const Properties &properties) {}
@@ -8,13 +8,14 @@ public:
     bool intersect(const Ray &ray, Intersection &its,
                    Sampler &rng) const override {
 
-        auto o_r = ray.origin - Point(0.f, 0.f, 0.f);
-        if (std::abs(o_r.length() - 1) < Epsilon)
+        auto o_r = ray.origin - Point(0);
+        if (std::abs(o_r.length() - 1.f) < Epsilon &&
+            o_r.dot(ray.direction) >= 0)
             return false;
 
         float b = 2 * o_r.dot(ray.direction);
 
-        const float delta = b * b - 4 * o_r.lengthSquared() + 4;
+        const float delta = sqr(b) - 4 * o_r.lengthSquared() + 4;
         if (delta < Epsilon)
             return false;
 
@@ -28,16 +29,18 @@ public:
             return false;
         its.t = t;
         its.position = ray(t);
-        its.frame.normal = its.position - Point(0);
+        its.frame.normal = (its.position - Point(0)).normalized();
         its.frame = Frame(its.frame.normal);
         float theta = std::acos(std::clamp(its.position.y(), -1.0f, 1.0f));
-        float phi = std::acos(
-            std::clamp(its.position.x() /
-                           std::sqrt(1 - its.position.y() * its.position.y()),
-                       -1.0f,
-                       1.0f));
+        float phi;
+        if (std::abs(std::abs(its.position.y()) - 1) < Epsilon) {
+            phi = 0;
+        } else {
+            phi = std::acos(its.position.x() /
+                            std::sqrt(1 - its.position.y() * its.position.y()));
+        }
         phi = its.position.z() > 0 ? -phi : phi;
-        its.uv.x() = phi * Inv2Pi + 0.5;
+        its.uv.x() = phi * Inv2Pi + 0.5f;
         its.uv.y() = theta * InvPi;
         return true;
     }
@@ -54,8 +57,7 @@ public:
         sample.position = squareToUniformSphere(rnd);
         sample.frame.normal = sample.position - Point(0);
         sample.frame = Frame(sample.frame.normal);
-        sample.uv.x() = rnd.x();
-        sample.uv.y() = -rnd.y();
+        sample.uv = rnd;
         sample.pdf = Inv4Pi;
         return sample;
     }

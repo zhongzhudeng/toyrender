@@ -2,7 +2,7 @@
 
 namespace lightwave {
 
-class CheckerBoardTexture : public Texture {
+class CheckerBoardTexture final: public Texture {
     Point2 m_scale;
     Color m_color_0;
     Color m_color_1;

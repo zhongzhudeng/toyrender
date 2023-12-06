@@ -1,10 +1,9 @@
-#include "fresnel.hpp"
 #include "microfacet.hpp"
 #include <lightwave.hpp>
 
 namespace lightwave {
 
-class RoughConductor : public Bsdf {
+class RoughConductor final: public Bsdf {
     ref<Texture> m_reflectance;
     ref<Texture> m_roughness;
 
@@ -21,21 +20,24 @@ public:
         // extremely specular distributions (alpha values below 10^-3)
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
 
-        NOT_IMPLEMENTED
-
-        // hints:
-        // * the microfacet normal can be computed from `wi' and `wo'
+        auto wm = (wi + wo) / (wi + wo).length();
+        auto R = m_reflectance->evaluate(uv);
+        auto D = microfacet::evaluateGGX(alpha, wm);
+        auto G1_wi = microfacet::smithG1(alpha, wm, wi),
+             G1_wo = microfacet::smithG1(alpha, wm, wo);
+        return {.value = R * D * G1_wi * G1_wo / (4 * Frame::cosTheta(wo))};
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
-
-        NOT_IMPLEMENTED
-        
-        // hints:
-        // * do not forget to cancel out as many terms from your equations as possible!
-        //   (the resulting sample weight is only a product of two factors)
+        auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
+        auto R = m_reflectance->evaluate(uv);
+        auto wi = reflect(wo, wm);
+        auto G1_wi = Frame::cosTheta(wo) > 0
+                         ? microfacet::smithG1(alpha, wm, wi)
+                         : -microfacet::smithG1(alpha, wm, wi);
+        return {.wi = wi, .weight = R * G1_wi};
     }
 
     std::string toString() const override {

@@ -19,7 +19,7 @@ struct LightSample {
 };
 
 /// @brief Scenes are the input to rendering algorithms: They contain all geometry, materials, lights and the camera.
-class Scene : public Object {
+class Scene final: public Object {
     /// @brief The camera from which the image is to be rendered.
     ref<Camera> m_camera;
     /// @brief The geometry of the scene that should be rendered (typically an acceleration structure with instances in it).

@@ -2,7 +2,7 @@
 
 namespace lightwave {
 
-class NormalTexture : public Texture {
+class NormalTexture final: public Texture {
     enum class BorderMode {
         Clamp,
         Repeat,

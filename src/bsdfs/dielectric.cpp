@@ -3,7 +3,7 @@
 
 namespace lightwave {
 
-class Dielectric : public Bsdf {
+class Dielectric final: public Bsdf {
     ref<Texture> m_ior;
     ref<Texture> m_reflectance;
     ref<Texture> m_transmittance;
@@ -25,7 +25,21 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
-        NOT_IMPLEMENTED
+        Vector n(0, 0, 1);
+        float eta = m_ior->scalar(uv);
+        if (Frame::cosTheta(wo) < 0.f)
+            n = -n, eta = 1.f / eta;
+        auto wi = reflect(wo, n), wr = refract(wo, n, eta);
+        if (wr.isZero())
+            return {.wi = wi, .weight = m_reflectance->evaluate(uv)};
+        float cosThetaI = Frame::cosTheta(wo) < 0.f ? Frame::absCosTheta(wr)
+                                                    : Frame::absCosTheta(wo);
+        auto f = fresnelDielectric(cosThetaI, m_ior->scalar(uv));
+        if (rng.next() <= f)
+            return {.wi = wi, .weight = m_reflectance->evaluate(uv)};
+        else
+            return {.wi = wr,
+                    .weight = m_transmittance->evaluate(uv) / sqr(eta)};
     }
 
     std::string toString() const override {

@@ -9,19 +9,12 @@ struct DiffuseLobe {
     Color color;
 
     BsdfEval evaluate(const Vector &wo, const Vector &wi) const {
-        NOT_IMPLEMENTED
-
-        // hints:
-        // * copy your diffuse bsdf evaluate here
-        // * you do not need to query a texture, the albedo is given by `color`
+        return {.value = Frame::cosTheta(wi) * color};
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
-        NOT_IMPLEMENTED
-
-        // hints:
-        // * copy your diffuse bsdf evaluate here
-        // * you do not need to query a texture, the albedo is given by `color`
+        auto wi = squareToCosineHemisphere(rng.next2D());
+        return BsdfSample{.wi = wi, .weight = color};
     }
 };
 
@@ -30,27 +23,24 @@ struct MetallicLobe {
     Color color;
 
     BsdfEval evaluate(const Vector &wo, const Vector &wi) const {
-        NOT_IMPLEMENTED
-
-        // hints:
-        // * copy your roughconductor bsdf evaluate here
-        // * you do not need to query textures
-        //   * the reflectance is given by `color'
-        //   * the variable `alpha' is already provided for you
+        auto wm = (wi + wo) / (wi + wo).length();
+        auto D = microfacet::evaluateGGX(alpha, wm);
+        auto G1_wi = microfacet::smithG1(alpha, wm, wi),
+             G1_wo = microfacet::smithG1(alpha, wm, wo);
+        return {.value = color * D * G1_wi * G1_wo / (4 * Frame::cosTheta(wo))};
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
-        NOT_IMPLEMENTED
-
-        // hints:
-        // * copy your roughconductor bsdf sample here
-        // * you do not need to query textures
-        //   * the reflectance is given by `color'
-        //   * the variable `alpha' is already provided for you
+        auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
+        auto wi = reflect(wo, wm);
+        auto G1_wi = Frame::cosTheta(wo) > 0
+                         ? microfacet::smithG1(alpha, wm, wi)
+                         : -microfacet::smithG1(alpha, wm, wi);
+        return {.wi = wi, .weight = color * G1_wi};
     }
 };
 
-class Principled : public Bsdf {
+class Principled final: public Bsdf {
     ref<Texture> m_baseColor;
     ref<Texture> m_roughness;
     ref<Texture> m_metallic;
@@ -98,19 +88,23 @@ public:
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
         const auto combination = combine(uv, wo);
-        NOT_IMPLEMENTED
-
-        // hint: evaluate `combination.diffuse` and `combination.metallic` and
-        // combine their results
+        return {.value = combination.diffuse.evaluate(wo, wi).value +
+                         combination.metallic.evaluate(wo, wi).value};
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         const auto combination = combine(uv, wo);
-        NOT_IMPLEMENTED
-
-        // hint: sample either `combination.diffuse` (probability
-        // `combination.diffuseSelectionProb`) or `combination.metallic`
+        if (rng.next() < combination.diffuseSelectionProb) {
+            auto bsdf = combination.diffuse.sample(wo, rng);
+            return {.wi = bsdf.wi,
+                    .weight = bsdf.weight / combination.diffuseSelectionProb};
+        } else {
+            auto bsdf = combination.metallic.sample(wo, rng);
+            return {.wi = bsdf.wi,
+                    .weight =
+                        bsdf.weight / (1 - combination.diffuseSelectionProb)};
+        }
     }
 
     std::string toString() const override {

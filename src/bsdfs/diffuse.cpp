@@ -2,17 +2,16 @@
 
 namespace lightwave {
 
-class Diffuse : public Bsdf {
-    ref<Texture> m_albedo;
+class Diffuse final: public Bsdf {
+    const ref<const Texture> m_albedo;
 
 public:
-    Diffuse(const Properties &properties) {
-        m_albedo = properties.get<Texture>("albedo");
-    }
+    Diffuse(const Properties &properties)
+        : m_albedo(properties.get<Texture>("albedo")) {}
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        NOT_IMPLEMENTED
+        return {.value = Frame::cosTheta(wi) * m_albedo->evaluate(uv)};
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,

@@ -12,7 +12,7 @@ namespace lightwave {
  * Since individual triangles are rarely needed (and would pose an excessive amount of overhead), collections of
  * triangles are combined in a single shape.
  */
-class TriangleMesh : public AccelerationStructure {
+class TriangleMesh final: public AccelerationStructure {
     /**
      * @brief The index buffer of the triangles.
      * The n-th element corresponds to the n-th triangle, and each component of the element corresponds to one

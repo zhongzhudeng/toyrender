@@ -1,52 +1,51 @@
-<test type="image" id="shading_normal">
-    <integrator type="direct">
-        <scene>
-            <camera type="perspective" id="camera">
-                <integer name="width" value="1920" />
-                <integer name="height" value="1080" />
+<integrator type="direct">
+    <image id="shading_normal" />
+    <scene>
+        <camera type="perspective" id="camera">
+            <integer name="width" value="1920" />
+            <integer name="height" value="1080" />
 
-                <string name="fovAxis" value="y" />
-                <float name="fov" value="40" />
+            <string name="fovAxis" value="y" />
+            <float name="fov" value="40" />
 
-                <transform>
-                    <lookat origin="0,-2,-5" target="0,0,0" up="0,1,0" />
-                    <translate z="1"/>
-                </transform>
-            </camera>
+            <transform>
+                <lookat origin="0,-2,-5" target="0,0,0" up="0,1,0" />
+                <translate z="1" />
+            </transform>
+        </camera>
 
-            <instance>
-                <shape type="sphere" />
-                <emission type="lambertian">
-                    <texture name="emission" type="constant" value="3,0.5,0.1" />
-                </emission>
-                <transform>
-                    <scale value="1" />
-                    <translate x="2.5" y="-2" z="-1" />
-                </transform>
-            </instance>
-            <instance>
-                <shape type="sphere" />
-                <emission type="lambertian">
-                    <texture name="emission" type="constant" value="0.2,0.7,3" />
-                </emission>
-                <transform>
-                    <scale value="1" />
-                    <translate x="-2.5" y="-2" z="1" />
-                </transform>
-            </instance>
+        <instance>
+            <shape type="sphere" />
+            <emission type="lambertian">
+                <texture name="emission" type="constant" value="3,0.5,0.1" />
+            </emission>
+            <transform>
+                <scale value="1" />
+                <translate x="2.5" y="-2" z="-1" />
+            </transform>
+        </instance>
+        <instance>
+            <shape type="sphere" />
+            <emission type="lambertian">
+                <texture name="emission" type="constant" value="0.2,0.7,3" />
+            </emission>
+            <transform>
+                <scale value="1" />
+                <translate x="-2.5" y="-2" z="1" />
+            </transform>
+        </instance>
 
-            <instance>
-                <shape type="rectangle" />
-                <bsdf type="diffuse">
-                    <texture name="albedo" type="image" filename="textures/brick_wall_basecolor.jpg" />
-                </bsdf>
-                <transform>
-                    <scale value="2" />
-                    <rotate axis="1,0,0" angle="90" />
-                </transform>
-                <texture name="normal" type="normal" filename="textures/brick_wall_normal.jpg" />
-            </instance>
-        </scene>
-        <sampler type="independent" count="128" />
-    </integrator>
-</test>
+        <instance>
+            <shape type="rectangle" />
+            <bsdf type="diffuse">
+                <texture name="albedo" type="image" filename="textures/brick_wall_basecolor.jpg" />
+            </bsdf>
+            <transform>
+                <scale value="2" />
+                <rotate axis="1,0,0" angle="90" />
+            </transform>
+            <texture name="normal" type="normal" filename="textures/brick_wall_normal.jpg" />
+        </instance>
+    </scene>
+    <sampler type="independent" count="128" />
+</integrator>

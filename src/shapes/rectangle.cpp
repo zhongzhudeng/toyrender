@@ -3,7 +3,7 @@
 namespace lightwave {
 
 /// @brief A rectangle in the xy-plane, spanning from [-1,-1,0] to [+1,+1,0].
-class Rectangle : public Shape {
+class Rectangle final: public Shape {
     /**
      * @brief Constructs a surface event for a given position, used by @ref intersect to populate the @ref Intersection
      * and by @ref sampleArea to populate the @ref AreaSample .

@@ -2,7 +2,7 @@
 
 namespace lightwave {
 
-class Lambertian : public Emission {
+class Lambertian final: public Emission {
     ref<Texture> m_emission;
 
 public:

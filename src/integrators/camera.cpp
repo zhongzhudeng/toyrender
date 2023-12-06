@@ -19,7 +19,7 @@ namespace lightwave {
  *   <integrator type="camera" grid="true" gridColor="0.5,0.3,0.2" gridFrequency="5" />
  * @endcode
  */
-class CameraIntegrator : public SamplingIntegrator {
+class CameraIntegrator final: public SamplingIntegrator {
     /// @brief Whether to show the grid, or only output the ray's direction as color.
     bool m_showGrid;
     /// @brief The color of the grid, if the grid is shown.
