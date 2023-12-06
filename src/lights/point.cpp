@@ -8,7 +8,7 @@ class PointLight final : public Light {
 public:
     PointLight(const Properties &properties) {
         m_position = properties.get<Point>("position");
-        m_intensity = properties.get<Color>("power") * Inv4Pi * InvPi;
+        m_intensity = properties.get<Color>("power") * Inv4Pi;
     }
 
     DirectLightSample sampleDirect(const Point &origin,

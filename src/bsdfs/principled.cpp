@@ -9,7 +9,7 @@ struct DiffuseLobe {
     Color color;
 
     BsdfEval evaluate(const Vector &wo, const Vector &wi) const {
-        return {.value = Frame::cosTheta(wi) * color};
+        return {.value = Frame::cosTheta(wi) * color * InvPi};
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
@@ -23,7 +23,7 @@ struct MetallicLobe {
     Color color;
 
     BsdfEval evaluate(const Vector &wo, const Vector &wi) const {
-        auto wm = (wi + wo) / (wi + wo).length();
+        auto wm = (wi + wo).normalized();
         auto D = microfacet::evaluateGGX(alpha, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi),
              G1_wo = microfacet::smithG1(alpha, wm, wo);
@@ -95,16 +95,20 @@ public:
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         const auto combination = combine(uv, wo);
-        if (rng.next() < combination.diffuseSelectionProb) {
-            auto bsdf = combination.diffuse.sample(wo, rng);
-            return {.wi = bsdf.wi,
-                    .weight = bsdf.weight / combination.diffuseSelectionProb};
-        } else {
-            auto bsdf = combination.metallic.sample(wo, rng);
-            return {.wi = bsdf.wi,
-                    .weight =
-                        bsdf.weight / (1 - combination.diffuseSelectionProb)};
+        BsdfSample bsdf;
+        if (std::isnan(combination.diffuseSelectionProb)) [[unlikely]] {
+            bsdf = combination.diffuse.sample(wo, rng);
+            return bsdf;
         }
+        if (rng.next() < combination.diffuseSelectionProb ) {
+            bsdf = combination.diffuse.sample(wo, rng);
+            bsdf.weight /= combination.diffuseSelectionProb;
+        } else {
+            bsdf = combination.metallic.sample(wo, rng);
+            bsdf.weight /= (1 - combination.diffuseSelectionProb);
+        }
+
+        return bsdf;
     }
 
     std::string toString() const override {

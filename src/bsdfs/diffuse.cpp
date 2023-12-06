@@ -11,7 +11,7 @@ public:
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        return {.value = Frame::cosTheta(wi) * m_albedo->evaluate(uv)};
+        return {.value = Frame::cosTheta(wi) * m_albedo->evaluate(uv) * InvPi};
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,

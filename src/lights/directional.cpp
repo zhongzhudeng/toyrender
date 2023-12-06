@@ -8,7 +8,7 @@ class DirectionalLight final : public Light {
 public:
     DirectionalLight(const Properties &properties)
         : m_direction(properties.get<Vector>("direction").normalized()),
-          m_intensity(properties.get<Color>("intensity") * InvPi) {}
+          m_intensity(properties.get<Color>("intensity")) {}
 
     DirectLightSample sampleDirect(const Point &origin,
                                    Sampler &rng) const override {

@@ -32,13 +32,8 @@ public:
         its.frame.normal = (its.position - Point(0)).normalized();
         its.frame = Frame(its.frame.normal);
         float theta = std::acos(std::clamp(its.position.y(), -1.0f, 1.0f));
-        float phi;
-        if (std::abs(std::abs(its.position.y()) - 1) < Epsilon) {
-            phi = 0;
-        } else {
-            phi = std::acos(its.position.x() /
-                            std::sqrt(1 - its.position.y() * its.position.y()));
-        }
+        float phi =
+            std::acos(its.position.x() / std::sqrt(1 - sqr(its.position.y())));
         phi = its.position.z() > 0 ? -phi : phi;
         its.uv.x() = phi * Inv2Pi + 0.5f;
         its.uv.y() = theta * InvPi;

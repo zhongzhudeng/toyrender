@@ -20,12 +20,13 @@ public:
         // extremely specular distributions (alpha values below 10^-3)
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
 
-        auto wm = (wi + wo) / (wi + wo).length();
+        auto wm = (wi + wo).normalized();
         auto R = m_reflectance->evaluate(uv);
         auto D = microfacet::evaluateGGX(alpha, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi),
              G1_wo = microfacet::smithG1(alpha, wm, wo);
-        return {.value = R * D * G1_wi * G1_wo / (4 * Frame::cosTheta(wo))};
+        auto det_reflection = microfacet::detReflection(wm, wo);
+        return {.value = R * D * G1_wi * G1_wo * det_reflection};
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
