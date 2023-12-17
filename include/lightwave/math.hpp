@@ -604,10 +604,12 @@ inline Vector refract(const Vector &w, const Vector &n, float eta) {
 inline Point2 toUV(const Vector &w) {
     float theta = std::acos(w.y());
     float phi;
-    if (1.f - std::abs(w.y()) > 1e-8) [[likely]]
-        phi = std::acos(w.x() / std::sqrt(1 - sqr(w.y())));
+    if (1.f - std::abs(w.y()) > 1e-5) [[likely]]
+        phi =
+            std::acos(std::clamp(w.x() / std::sqrt(1 - sqr(w.y())), -1.f, 1.f));
     else [[unlikely]]
         phi = 0;
+    assert(not std::isnan(phi));
     phi = w.z() > 0 ? -phi : phi;
     return Point2(phi* Inv2Pi + 0.5, theta* InvPi);
 }
