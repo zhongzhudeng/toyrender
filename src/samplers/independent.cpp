@@ -35,6 +35,11 @@ public:
     float next() override {
         return m_pcg.nextFloat();
     }
+    // virtual Point2 next2D() override {
+    //     auto x = next(), y = next();
+    //     printf("%8.7f,%8.7f\n", x, y);
+    //     return {x, y};
+    // }
 
     ref<Sampler> clone() const override {
         return std::make_shared<Independent>(*this);

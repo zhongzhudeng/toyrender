@@ -4,14 +4,13 @@
 namespace lightwave {
 
 class RoughConductor final: public Bsdf {
-    ref<Texture> m_reflectance;
-    ref<Texture> m_roughness;
+    const ref<const Texture> m_reflectance;
+    const ref<const Texture> m_roughness;
 
 public:
-    RoughConductor(const Properties &properties) {
-        m_reflectance = properties.get<Texture>("reflectance");
-        m_roughness   = properties.get<Texture>("roughness");
-    }
+    RoughConductor(const Properties &properties)
+        : m_reflectance(properties.get<Texture>("reflectance")),
+          m_roughness(properties.get<Texture>("roughness")) {}
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
@@ -25,8 +24,9 @@ public:
         auto D = microfacet::evaluateGGX(alpha, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi),
              G1_wo = microfacet::smithG1(alpha, wm, wo);
-        auto det_reflection = microfacet::detReflection(wm, wo);
-        return {.value = R * D * G1_wi * G1_wo * det_reflection};
+        return {.value = R * D * G1_wi * G1_wo *
+                         std::copysign(1.f, Frame::cosTheta(wi)) /
+                         (4 * Frame::absCosTheta(wo))};
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
@@ -35,10 +35,9 @@ public:
         auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
         auto R = m_reflectance->evaluate(uv);
         auto wi = reflect(wo, wm);
-        auto G1_wi = Frame::cosTheta(wo) > 0
-                         ? microfacet::smithG1(alpha, wm, wi)
-                         : -microfacet::smithG1(alpha, wm, wi);
-        return {.wi = wi, .weight = R * G1_wi};
+        auto G1_wi = microfacet::smithG1(alpha, wm, wi);
+        return {.wi = wi,
+                .weight = R * G1_wi * std::copysign(1.f, Frame::cosTheta(wi))};
     }
 
     std::string toString() const override {

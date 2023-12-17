@@ -79,4 +79,11 @@ inline float cosineHemispherePdf(const Vector &vector) {
     return InvPi * std::max(vector.z(), float(0));
 }
 
+inline Point2 squareToUniformTriangle(const Point2 &sample) {
+    float su0 = std::sqrt(sample.x());
+    return Point2(1 - su0, sample.y() * su0);
+}
+
+
+
 }

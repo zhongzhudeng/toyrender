@@ -4,36 +4,23 @@ namespace lightwave {
 
 class EnvironmentMap final : public BackgroundLight {
     /// @brief The texture to use as background
-    ref<Texture> m_texture;
+    const ref<const Texture> m_texture;
 
     /// @brief An optional transform from local-to-world space
-    ref<Transform> m_transform;
+    const ref<const Transform> m_transform;
 
 public:
-    EnvironmentMap(const Properties &properties) {
-        m_texture = properties.getChild<Texture>();
-        m_transform = properties.getOptionalChild<Transform>();
-    }
+    EnvironmentMap(const Properties &properties)
+        : m_texture(properties.getChild<Texture>()),
+          m_transform(properties.getOptionalChild<Transform>()) {}
 
     BackgroundLightEval evaluate(const Vector &direction) const override {
         Vector2 warped = Vector2(0, 0);
         Vector local = direction;
         if (m_transform)
             local = m_transform->inverse(local).normalized();
-        
-        // if the value passed in std::acos is slightly out of [-1, 1], 
-        // it will give us NaN number.
-        float x_r = local.x() / std::sqrt(1 - local.y() * local.y());
-        local.y() = std::clamp(local.y(), -1.0f, 1.0f);
-        x_r = std::clamp(x_r, -1.0f, 1.0f);
-
-        float theta = std::acos(local.y()), phi = std::acos(x_r);
-        phi = local.z() > 0 ? -phi : phi;
-
-        warped.x() = phi * Inv2Pi + 0.5;
-        warped.y() = theta * InvPi;
         return {
-            .value = m_texture->evaluate(warped),
+            .value = m_texture->evaluate(toUV(local)),
         };
     }
 

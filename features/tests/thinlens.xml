@@ -1,7 +1,7 @@
 <integrator type="normals">
     <image id="thinlens" />
     <scene>
-        <camera type="thinLens" id="camera">
+        <camera type="thinlens" id="camera">
             <integer name="width" value="1920" />
             <integer name="height" value="1080" />
 

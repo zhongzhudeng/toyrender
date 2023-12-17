@@ -14,7 +14,7 @@ struct DiffuseLobe {
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
         auto wi = squareToCosineHemisphere(rng.next2D());
-        return BsdfSample{.wi = wi, .weight = color};
+        return {.wi = wi, .weight = color};
     }
 };
 
@@ -27,16 +27,18 @@ struct MetallicLobe {
         auto D = microfacet::evaluateGGX(alpha, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi),
              G1_wo = microfacet::smithG1(alpha, wm, wo);
-        return {.value = color * D * G1_wi * G1_wo / (4 * Frame::cosTheta(wo))};
+        return {.value = color * D * G1_wi * G1_wo *
+                         std::copysign(1.f, Frame::cosTheta(wi)) /
+                         (4 * Frame::absCosTheta(wo))};
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
         auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
         auto wi = reflect(wo, wm);
-        auto G1_wi = Frame::cosTheta(wo) > 0
-                         ? microfacet::smithG1(alpha, wm, wi)
-                         : -microfacet::smithG1(alpha, wm, wi);
-        return {.wi = wi, .weight = color * G1_wi};
+        auto G1_wi = microfacet::smithG1(alpha, wm, wi);
+        return {.wi = wi,
+                .weight =
+                    color * G1_wi * std::copysign(1.f, Frame::cosTheta(wi))};
     }
 };
 
@@ -68,10 +70,12 @@ class Principled final: public Bsdf {
             .color = F * Color(1) + (1 - F) * metallic * baseColor,
         };
 
+        const auto diffuseAlbedo = diffuseLobe.color.mean();
+        const auto totalAlbedo =
+            diffuseLobe.color.mean() + metallicLobe.color.mean();
         return {
             .diffuseSelectionProb =
-                diffuseLobe.color.mean() /
-                (diffuseLobe.color.mean() + metallicLobe.color.mean()),
+                totalAlbedo > 0 ? diffuseAlbedo / totalAlbedo : 1.0f,
             .diffuse  = diffuseLobe,
             .metallic = metallicLobe,
         };
@@ -96,10 +100,6 @@ public:
                       Sampler &rng) const override {
         const auto combination = combine(uv, wo);
         BsdfSample bsdf;
-        if (std::isnan(combination.diffuseSelectionProb)) [[unlikely]] {
-            bsdf = combination.diffuse.sample(wo, rng);
-            return bsdf;
-        }
         if (rng.next() < combination.diffuseSelectionProb ) {
             bsdf = combination.diffuse.sample(wo, rng);
             bsdf.weight /= combination.diffuseSelectionProb;

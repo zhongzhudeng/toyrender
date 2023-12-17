@@ -1,6 +1,22 @@
 #include <lightwave.hpp>
 namespace lightwave {
 class Sphere final: public Shape {
+    inline void populate(SurfaceEvent &surf, const Point &position) const {
+        auto normal = (position - Point(0)).normalized();
+        surf.position = normal;
+        surf.frame = Frame(normal);
+        float theta = std::acos(surf.position.y());
+        float phi;
+        if (1.f - std::abs(surf.position.y()) > 1e-8) [[likely]]
+            phi = std::acos(surf.position.x() /
+                            std::sqrt(1 - sqr(surf.position.y())));
+        else [[unlikely]]
+            phi = 0;
+        phi = surf.position.z() > 0 ? -phi : phi;
+        surf.uv.x() = phi * Inv2Pi + 0.5f;
+        surf.uv.y() = theta * InvPi;
+        surf.pdf = Inv4Pi;
+    }
 
 public:
     Sphere(const Properties &properties) {}
@@ -16,27 +32,20 @@ public:
         float b = 2 * o_r.dot(ray.direction);
 
         const float delta = sqr(b) - 4 * o_r.lengthSquared() + 4;
-        if (delta < Epsilon)
+        if (delta < Epsilon) [[unlikely]]
             return false;
 
         float t = (-b - std::sqrt(delta)) / 2;
-        if (t < Epsilon) {
+        if (t < Epsilon) [[unlikely]] {
             t = (-b + std::sqrt(delta)) / 2;
-            if (t < Epsilon)
+            if (t < Epsilon) [[unlikely]]
                 return false;
         }
-        if (its.t < t)
+        if (its.t < t) [[unlikely]]
             return false;
         its.t = t;
-        its.position = ray(t);
-        its.frame.normal = (its.position - Point(0)).normalized();
-        its.frame = Frame(its.frame.normal);
-        float theta = std::acos(std::clamp(its.position.y(), -1.0f, 1.0f));
-        float phi =
-            std::acos(its.position.x() / std::sqrt(1 - sqr(its.position.y())));
-        phi = its.position.z() > 0 ? -phi : phi;
-        its.uv.x() = phi * Inv2Pi + 0.5f;
-        its.uv.y() = theta * InvPi;
+        const Point position = ray(t);
+        populate(its, position);
         return true;
     }
 
@@ -47,13 +56,9 @@ public:
     Point getCentroid() const override { return Point(0); }
 
     AreaSample sampleArea(Sampler &rng) const override {
-        Point2 rnd = rng.next2D();
         AreaSample sample;
-        sample.position = squareToUniformSphere(rnd);
-        sample.frame.normal = sample.position - Point(0);
-        sample.frame = Frame(sample.frame.normal);
-        sample.uv = rnd;
-        sample.pdf = Inv4Pi;
+        const Point position = squareToUniformSphere(rng.next2D());
+        populate(sample, position);
         return sample;
     }
 

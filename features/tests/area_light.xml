@@ -10,16 +10,27 @@
 
             <transform>
                 <rotate axis="1,0,0" angle="-2.5" />
-                <translate z="-5" />
+                <translate z="-6" />
             </transform>
         </camera>
 
-        <light type="area" intensity = "3,0.5,0.1">
+        <light type="area" intensity = "6,1,0.2">
             <instance>
                 <shape type="sphere" />
                 <transform>
-                    <scale value="1" />
-                    <translate x="2" y="-1.2" z="1.2" />
+                    <scale value="0.5" />
+                    <translate x="1" y="-1.2" z="1.2" />
+                </transform>
+            </instance>
+        </light>
+
+        <light type="area" intensity="0.5">
+            <instance id="lamp">
+                <shape type="rectangle" />
+                <transform>
+                    <scale value="0.5" />
+                    <rotate axis="1,0,0" angle="-90" />
+                    <translate y="-0.98" />
                 </transform>
             </instance>
         </light>
@@ -59,4 +70,3 @@
     </scene>
     <sampler type="independent" count="64" />
 </integrator>
-<!-- </test> -->

@@ -4,16 +4,15 @@
 namespace lightwave {
 
 class Dielectric final: public Bsdf {
-    ref<Texture> m_ior;
-    ref<Texture> m_reflectance;
-    ref<Texture> m_transmittance;
+    const ref<const Texture> m_ior;
+    const ref<const Texture> m_reflectance;
+    const ref<const Texture> m_transmittance;
 
 public:
-    Dielectric(const Properties &properties) {
-        m_ior           = properties.get<Texture>("ior");
-        m_reflectance   = properties.get<Texture>("reflectance");
-        m_transmittance = properties.get<Texture>("transmittance");
-    }
+    Dielectric(const Properties &properties)
+        : m_ior(properties.get<Texture>("ior")),
+          m_reflectance(properties.get<Texture>("reflectance")),
+          m_transmittance(properties.get<Texture>("transmittance")) {}
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
@@ -27,18 +26,14 @@ public:
                       Sampler &rng) const override {
         Vector n(0, 0, 1);
         float eta = m_ior->scalar(uv);
-        if (Frame::cosTheta(wo) < 0.f)
+        if (wo.dot(n) < 0)
             n = -n, eta = 1.f / eta;
-        auto wi = reflect(wo, n), wr = refract(wo, n, eta);
-        if (wr.isZero())
-            return {.wi = wi, .weight = m_reflectance->evaluate(uv)};
-        float cosThetaI = Frame::cosTheta(wo) < 0.f ? Frame::absCosTheta(wr)
-                                                    : Frame::absCosTheta(wo);
-        auto f = fresnelDielectric(cosThetaI, m_ior->scalar(uv));
+        const auto f = fresnelDielectric(wo.dot(n), eta);
         if (rng.next() <= f)
-            return {.wi = wi, .weight = m_reflectance->evaluate(uv)};
+            return {.wi = reflect(wo, n),
+                    .weight = m_reflectance->evaluate(uv)};
         else
-            return {.wi = wr,
+            return {.wi = refract(wo, n, eta),
                     .weight = m_transmittance->evaluate(uv) / sqr(eta)};
     }
 

@@ -25,9 +25,9 @@ public:
                 .normalized();
         auto t = focal_distance / ray_origin_screen.direction.z();
         Point p_in_focus_plane = ray_origin_screen(t);
-        Point2 sample_2d = rng.next2D();
-        Point lens_sample(
-            sample_2d.x() * lens_radius, sample_2d.y() * lens_radius, 0);
+        Point2 sample = squareToUniformDiskConcentric(rng.next2D());
+        Point lens_sample =
+            Point(sample.x() * lens_radius, sample.y() * lens_radius, 0);
         auto direction = p_in_focus_plane - lens_sample;
         auto ray_from_focus_plane =
             Ray(p_in_focus_plane, direction).normalized();
@@ -64,4 +64,4 @@ private:
 
 }
 
-REGISTER_CAMERA(ThinLens, "thinLens")
+REGISTER_CAMERA(ThinLens, "thinlens")

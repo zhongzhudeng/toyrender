@@ -29,7 +29,7 @@ class TriangleMesh final: public AccelerationStructure {
     /// @brief The file this mesh was loaded from, for logging and debugging purposes.
     std::filesystem::path m_originalPath;
     /// @brief Whether to interpolate the normals from m_vertices, or report the geometric normal instead.
-    bool m_smoothNormals;
+    const bool m_smoothNormals;
 
 protected:
     int numberOfPrimitives() const override { return int(m_triangles.size()); }
@@ -45,7 +45,7 @@ protected:
         auto pvec = ray.direction.cross(edge2);
         auto det = edge1.dot(pvec);
 
-        if (det > 1e-8 && det < 1e-8)
+        if (det > 1e-8 && det < 1e-8) [[unlikely]]
             return false;
         auto inv_det = 1.f / det;
 
@@ -76,10 +76,6 @@ protected:
             its.position = ray(t);
         }
         its.frame = Frame(its.frame.normal);
-        // its.frame.tangent = edge1.normalized();
-        // its.frame.bitangent =
-        //     its.frame.normal.cross(its.frame.tangent).normalized();
-
         return true;
     }
 
@@ -107,9 +103,9 @@ protected:
     }
 
 public:
-    TriangleMesh(const Properties &properties) {
+    TriangleMesh(const Properties &properties)
+        : m_smoothNormals(properties.get<bool>("smooth", true)) {
         m_originalPath = properties.get<std::filesystem::path>("filename");
-        m_smoothNormals = properties.get<bool>("smooth", true);
         readPLY(m_originalPath.string(), m_triangles, m_vertices);
         logger(EInfo,
                "loaded ply with %d triangles, %d vertices",

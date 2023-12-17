@@ -1,0 +1,55 @@
+<scene id="scene">
+  <camera type="perspective">
+    <integer name="width" value="1920"/>
+    <integer name="height" value="1080"/>
+    <float name="fov" value="36.2"/>
+    <string name="fovAxis" value="x"/>
+    <transform>
+      <matrix value="0.816,0.161,-0.555,2.2,  0.578,-0.227,0.784,-2.69,  -1.67e-08,-0.961,-0.278,1.56,  0,0,0,1"/>
+    </transform>
+  </camera>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="constant" value="0.8,0.8,0.8"/>
+      <texture name="roughness" type="constant" value="0.2"/>
+      <texture name="metallic" type="constant" value="0"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/White Ceramic Decorative Vases 04.ply"/>
+    <transform>
+      <matrix value="1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="constant" value="0.0627,0.0441,0.0124"/>
+      <texture name="roughness" type="constant" value="0.412"/>
+      <texture name="metallic" type="constant" value="0.718"/>
+      <texture name="specular" type="constant" value="0"/>
+    </bsdf>
+    <shape type="mesh" filename="meshes/beaver statue.ply"/>
+    <transform>
+      <matrix value="0.5,0,0,0,  0,0.5,0,0.895,  0,0,0.5,0,  0,0,0,1"/>
+    </transform>
+  </instance>
+  <instance>
+    <shape type="rectangle"/>
+    <transform>
+      <matrix value="1,0,-0,0,  0,1,-0,0,  0,0,-2,1.5,  0,0,0,1"/>
+    </transform>
+    <emission type="lambertian">
+      <texture name="emission" type="constant" value="0.625,0.625,0.625"/>
+    </emission>
+  </instance>
+  <light type="envmap">
+    <texture type="image" filename="textures/studio_hdri_2_2K_fa2ce085-8bca-48d4-b35a-7d6fcbec4d02.exr.exr" border="clamp"/>
+    <transform>
+      <matrix value="1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,0,0,1"/>
+    </transform>
+  </light>
+</scene>
+<integrator type="pathtracer" depth="3" nee="true" mis="true">
+  <ref id="scene"/>
+  <image id="noisy"/>
+  <sampler type="independent" count="64"/>
+</integrator>

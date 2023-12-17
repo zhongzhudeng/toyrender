@@ -3,12 +3,11 @@
 namespace lightwave {
 
 class Conductor final: public Bsdf {
-    ref<Texture> m_reflectance;
+    const ref<const Texture> m_reflectance;
 
 public:
-    Conductor(const Properties &properties) {
-        m_reflectance = properties.get<Texture>("reflectance");
-    }
+    Conductor(const Properties &properties)
+        : m_reflectance(properties.get<Texture>("reflectance")) {}
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
@@ -20,8 +19,8 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
-        return BsdfSample{.wi = reflect(wo, Vector(0, 0, 1)),
-                          .weight = m_reflectance->evaluate(uv)};
+        return {.wi = reflect(wo, Vector(0, 0, 1)),
+                .weight = m_reflectance->evaluate(uv)};
     }
 
     std::string toString() const override {

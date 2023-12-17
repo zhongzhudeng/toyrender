@@ -5,7 +5,12 @@
 
 namespace lightwave {
 
+
+
 void Instance::transformFrame(SurfaceEvent &surf) const {
+    surf.pdf /= m_transform->area_scale_to_world(surf.frame.tangent,
+                                                 surf.frame.bitangent);
+
     surf.position = m_transform->apply(surf.position);
     if (m_normal) {
         Vector normal = m_normal->evaluate(surf.uv).data();
@@ -42,14 +47,13 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its,
     }
 
     const float previousT = its.t;
-    Ray localRay = m_transform->inverse(worldRay);
-    const float scale = localRay.direction.length();
-    its.t = its.t * scale;
-    localRay = localRay.normalized();
+    const float scale = m_transform->line_scale_to_local(worldRay.direction);
+    its.t *= scale;
+    auto localRay = m_transform->inverse(worldRay).normalized();
 
     const bool wasIntersected = m_shape->intersect(localRay, its, rng);
     if (wasIntersected) {
-        its.t = its.t / scale;
+        its.t /= scale;
         its.instance = this;
         transformFrame(its);
         return true;
