@@ -1,17 +1,16 @@
-#include "fresnel.hpp"
 #include "microfacet.hpp"
 #include <lightwave.hpp>
 
 namespace lightwave {
 
-class RoughDieletric final : public Bsdf {
+class RoughDielectric final : public Bsdf {
     const ref<const Texture> m_ior;
     const ref<const Texture> m_reflectance;
     const ref<const Texture> m_transmittance;
     const ref<const Texture> m_roughness;
 
 public:
-    RoughDieletric(const Properties &properties)
+    RoughDielectric(const Properties &properties)
         : m_ior(properties.get<Texture>("ior")),
           m_reflectance(properties.get<Texture>("reflectance")),
           m_transmittance(properties.get<Texture>("transmittance")),
@@ -28,27 +27,35 @@ public:
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
-        auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
-        auto h = wm;
-        auto eta = m_ior->scalar(uv);
-        if (wm.dot(wo) < 0)
-            h = -wm, eta = 1.f / eta;
-        const auto f = fresnelDielectric(wo.dot(h), eta);
+        const auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
+        float eta, invEta;
+
+        if (Frame::cosTheta(wo) >= 0)
+            eta = m_ior->scalar(uv), invEta = 1.f / m_ior->scalar(uv);
+        else
+            eta = 1.f / m_ior->scalar(uv), invEta = m_ior->scalar(uv);
+
+        const auto f = microfacet::fresnelDielectric(wo, wm, eta);
+
         Vector wi;
         Color w;
-        if (rng.next() <= f)
-            wi = reflect(wo, h), w = m_reflectance->evaluate(uv);
-        else
-            wi = refract(wo, h, eta), w = m_transmittance->evaluate(uv);
-        w = w * microfacet::smithG1(alpha, wm, wi) *
-            microfacet::smithG1(alpha, wm, wo) *
-            std::abs(wo.dot(wm) / (wo.z() * wm.z()));
-        return {wi, w};
+        if (rng.next() <= f) {
+            wi = microfacet::reflect(wo, wm);
+            w = m_reflectance->evaluate(uv);
+        } else {
+            wi = microfacet::refract(
+                wo, std::copysign(1.f, wm.z()) * wm, invEta),
+            w = m_transmittance->evaluate(uv) / sqr(eta);
+        }
+        const auto G1_wo = microfacet::smithG1(alpha, wm, wo);
+        const auto G1_wi = microfacet::smithG1(alpha, wm, wi);
+        return {wi,
+                w * G1_wi * G1_wo * std::abs(wo.dot(wm) / (wo.z() * wm.z()))};
     }
 
     std::string toString() const override {
         return tfm::format(
-            "RoughDieletric[\n"
+            "RoughDielectric[\n"
             "  ior           = %s,\n"
             "  reflectance   = %s,\n"
             "  transmittance = %s\n"
@@ -63,4 +70,4 @@ public:
 
 } // namespace lightwave
 
-REGISTER_BSDF(RoughDieletric, "roughdieletric")
+REGISTER_BSDF(RoughDielectric, "roughdielectric")

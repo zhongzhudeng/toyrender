@@ -274,4 +274,25 @@ inline Vector sampleGTR1(float alpha, const Point2 &rnd) {
     return { sinTheta * cosPhi, sinTheta * sinPhi, cosTheta };
 }
 
+inline Vector refract(const Vector &i, const Vector &m, float invEta) {
+    const auto c = i.dot(m);
+    const auto k = 1.f + sqr(invEta) * (sqr(c) - 1.f);
+    assert(k >= 0.f);
+    return (invEta * c - std::copysign(1.f, i.z()) * std::sqrt(k)) * m -
+           invEta * i;
+}
+
+inline Vector reflect(const Vector &w, const Vector &m) {
+    return 2 * std::abs(m.dot(w)) * m - w;
+}
+
+inline float fresnelDielectric(const Vector &i, const Vector &m, float eta) {
+    const auto c = std::abs(i.dot(m)), k = sqr(eta) - 1 + sqr(c);
+    if (k <= 0.f)
+        return 1.f;
+    const auto g = std::sqrt(k);
+    return sqr(g - c) / (2 * sqr(g + c)) *
+           (1 + sqr(c * (g + c) - 1) / sqr(c * (g - c) + 1));
+}
+
 } // namespace lightwave::microfacet

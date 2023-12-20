@@ -89,7 +89,7 @@
 
     <instance>
       <shape type="mesh" filename="../../tests/meshes/bunny.ply" />
-      <bsdf type="roughdieletric">
+      <bsdf type="roughdielectric">
         <texture name="ior" type="constant" value="1.5"/>
         <texture name="reflectance" type="constant" value="1,0.8,0.7"/>
         <texture name="transmittance" type="constant" value="0.7,0.8,1"/>
