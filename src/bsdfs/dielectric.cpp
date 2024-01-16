@@ -3,7 +3,7 @@
 
 namespace lightwave {
 
-class Dielectric final: public Bsdf {
+class Dielectric final : public Bsdf {
     const ref<const Texture> m_ior;
     const ref<const Texture> m_reflectance;
     const ref<const Texture> m_transmittance;
@@ -24,27 +24,31 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
-        Vector n(0, 0, 1);
-        float eta = m_ior->scalar(uv);
-        if (wo.dot(n) < 0)
-            n = -n, eta = 1.f / eta;
-        const auto f = fresnelDielectric(wo.dot(n), eta);
+        const Vector n(0, 0, 1);
+        const float eta = Frame::cosTheta(wo) > 0 ? m_ior->scalar(uv)
+                                                  : 1.f / m_ior->scalar(uv);
+        const float sgn = copysign(1, Frame::cosTheta(wo));
+
+        const auto f = fresnelDielectric(Frame::absCosTheta(wo), eta);
         if (rng.next() <= f)
-            return {.wi = reflect(wo, n),
+            return {.wi = reflect(wo, sgn * n),
                     .weight = m_reflectance->evaluate(uv)};
         else
-            return {.wi = refract(wo, n, eta),
+            return {.wi = refract(wo, sgn * n, eta),
                     .weight = m_transmittance->evaluate(uv) / sqr(eta)};
     }
 
     std::string toString() const override {
-        return tfm::format("Dielectric[\n"
-                           "  ior           = %s,\n"
-                           "  reflectance   = %s,\n"
-                           "  transmittance = %s\n"
-                           "]",
-                           indent(m_ior), indent(m_reflectance),
-                           indent(m_transmittance));
+        return tfm::format(
+            "Dielectric[\n"
+            "  ior           = %s,\n"
+            "  reflectance   = %s,\n"
+            "  transmittance = %s\n"
+            "]",
+            indent(m_ior),
+            indent(m_reflectance),
+            // const auto f = fresnelDielectric(Frame::absCosTheta(wo), eta);
+            indent(m_transmittance));
     }
 };
 

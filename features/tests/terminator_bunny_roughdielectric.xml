@@ -90,10 +90,10 @@
     <instance>
       <shape type="mesh" filename="../../tests/meshes/bunny.ply" />
       <bsdf type="roughdielectric">
-        <texture name="ior" type="constant" value="1.5"/>
-        <texture name="reflectance" type="constant" value="1,0.8,0.7"/>
-        <texture name="transmittance" type="constant" value="0.7,0.8,1"/>
-        <texture name="roughness" type="constant" value="0.33"/>
+        <texture name="ior" type="constant" value="1.5" />
+        <texture name="reflectance" type="constant" value="0.95,0.95,0.95" />
+        <texture name="transmittance" type="constant" value="0.95,0.95,0.95" />
+        <texture name="roughness" type="constant" value="0.25" />
       </bsdf>
       <transform>
         <scale value="0.8" />
@@ -105,7 +105,8 @@
     <instance>
       <shape type="rectangle" />
       <emission type="lambertian">
-        <texture name="emission" type="image" filename="../../tests/textures/bunninator.png" exposure="1" />
+        <texture name="emission" type="image" filename="../../tests/textures/bunninator.png"
+          exposure="1" />
       </emission>
       <transform>
         <scale y="0.25" />

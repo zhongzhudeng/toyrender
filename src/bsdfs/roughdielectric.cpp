@@ -1,3 +1,4 @@
+#include "fresnel.hpp"
 #include "microfacet.hpp"
 #include <lightwave.hpp>
 
@@ -28,29 +29,20 @@ public:
                       Sampler &rng) const override {
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
         const auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
-        float eta, invEta;
-
-        if (Frame::cosTheta(wo) >= 0)
-            eta = m_ior->scalar(uv), invEta = 1.f / m_ior->scalar(uv);
-        else
-            eta = 1.f / m_ior->scalar(uv), invEta = m_ior->scalar(uv);
-
-        const auto f = microfacet::fresnelDielectric(wo, wm, eta);
-
+        const float eta = Frame::cosTheta(wo) > 0 ? m_ior->scalar(uv)
+                                                  : 1.f / m_ior->scalar(uv);
+        const auto f = fresnelDielectric(wo.dot(wm), eta);
         Vector wi;
         Color w;
-        if (rng.next() <= f) {
-            wi = microfacet::reflect(wo, wm);
-            w = m_reflectance->evaluate(uv);
-        } else {
-            wi = microfacet::refract(
-                wo, std::copysign(1.f, wm.z()) * wm, invEta),
+
+        if (rng.next() <= f)
+            wi = reflect(wo, wm), w = m_reflectance->evaluate(uv);
+        else
+            wi = refract(wo, wm, eta),
             w = m_transmittance->evaluate(uv) / sqr(eta);
-        }
-        const auto G1_wo = microfacet::smithG1(alpha, wm, wo);
+
         const auto G1_wi = microfacet::smithG1(alpha, wm, wi);
-        return {wi,
-                w * G1_wi * G1_wo * std::abs(wo.dot(wm) / (wo.z() * wm.z()))};
+        return {wi, w * G1_wi * Frame::absCosTheta(wi)};
     }
 
     std::string toString() const override {
