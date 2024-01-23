@@ -1,5 +1,5 @@
 <integrator type="pathtracer" depth="6">
-  <image id="terminator_bunny_roughdielectric" />
+  <image id="terminator_bunny_dielectric" />
   <scene id="scene">
     <camera type="perspective" id="camera">
       <integer name="width" value="400" />
@@ -89,12 +89,11 @@
 
     <instance>
       <shape type="mesh" filename="../../tests/meshes/bunny.ply" />
-      <bsdf type="roughdielectric">
+      <bsdf type="dielectric">
         <texture name="ior" type="constant" value="1.5"/>
         <texture name="reflectance" type="constant" value="1,0.8,0.7"/>
         <texture name="transmittance" type="constant" value="0.7,0.8,1"/>
-        <texture name="roughness" type="constant" value="0.2" />
-      </bsdf>
+    </bsdf>
       <transform>
         <scale value="0.8" />
         <rotate axis="1,0,0" angle="90" />
@@ -116,5 +115,5 @@
       </transform>
     </instance>
   </scene>
-  <sampler type="halton" count="1024" />
+  <sampler type="halton" count="256" />
 </integrator>

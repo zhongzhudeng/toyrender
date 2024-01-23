@@ -3,7 +3,7 @@
 
 namespace lightwave {
 
-class RoughConductor final: public Bsdf {
+class RoughConductor final : public Bsdf {
     const ref<const Texture> m_reflectance;
     const ref<const Texture> m_roughness;
 
@@ -24,9 +24,7 @@ public:
         auto D = microfacet::evaluateGGX(alpha, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi),
              G1_wo = microfacet::smithG1(alpha, wm, wo);
-        return {.value = R * D * G1_wi * G1_wo *
-                         std::copysign(1.f, Frame::cosTheta(wi)) /
-                         (4 * Frame::absCosTheta(wo))};
+        return {.value = R * D * G1_wi * G1_wo / (4 * Frame::absCosTheta(wo))};
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
@@ -41,11 +39,13 @@ public:
     }
 
     std::string toString() const override {
-        return tfm::format("RoughConductor[\n"
-                           "  reflectance = %s,\n"
-                           "  roughness = %s\n"
-                           "]",
-                           indent(m_reflectance), indent(m_roughness));
+        return tfm::format(
+            "RoughConductor[\n"
+            "  reflectance = %s,\n"
+            "  roughness = %s\n"
+            "]",
+            indent(m_reflectance),
+            indent(m_roughness));
     }
 };
 

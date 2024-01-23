@@ -27,5 +27,5 @@
 
 ## TODO
 
-- rough dielectric evaluate
+- rough dielectric evaluate is not correct, see `features/tests/light_point_roughdielectric.xml`
 - Image Denoising

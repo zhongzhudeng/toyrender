@@ -19,10 +19,37 @@ public:
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        // the probability of a light sample picking exactly the direction `wi'
-        // that results from reflecting `wo' is zero, hence we can just ignore
-        // that case and always return black
-        return BsdfEval::invalid();
+        const auto cosTheta_o = Frame::cosTheta(wo),
+                   cosTheta_i = Frame::cosTheta(wi);
+        if (cosTheta_i == 0 || cosTheta_o == 0)
+            return BsdfEval::invalid();
+
+        const auto eta =
+            cosTheta_o > 0 ? m_ior->scalar(uv) : 1.f / m_ior->scalar(uv);
+        const bool reflect = cosTheta_i * cosTheta_o > 0;
+        const auto etap = reflect ? 1 : eta;
+        Vector wm = wi * etap + wo;
+        if (wm.lengthSquared() == 0)
+            return BsdfEval::invalid();
+        wm = std::copysign(1.f, Frame::cosTheta(wm)) * wm.normalized();
+
+        if (wm.dot(wi) * cosTheta_i < 0 || wm.dot(wo) * cosTheta_o < 0)
+            return BsdfEval::invalid();
+
+        const auto f = fresnelDielectric(wo.dot(wm), eta);
+        const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
+        const auto G = microfacet::smithG1(alpha, wm, wi) *
+                       microfacet::smithG1(alpha, wm, wo);
+        auto D = microfacet::evaluateGGX(alpha, wm);
+        if (reflect) {
+            const auto R = m_reflectance->evaluate(uv);
+            return {.value = R * f * G * D * microfacet::detReflection(wm, wo)};
+        } else {
+            const auto T = m_transmittance->evaluate(uv);
+            return {.value = T * (1 - f) * G * D *
+                             microfacet::detRefraction(wm, wi, wo, eta) /
+                             std::abs(cosTheta_o)};
+        }
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
