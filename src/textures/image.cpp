@@ -13,7 +13,7 @@ class ImageTexture final: public Texture {
         Bilinear,
     };
 
-    ref<Image> m_image;
+    cref<Image> m_image;
     float m_exposure;
     BorderMode m_border;
     FilterMode m_filter;
@@ -28,9 +28,9 @@ class ImageTexture final: public Texture {
 public:
     ImageTexture(const Properties &properties) {
         if (properties.has("filename")) {
-            m_image = std::make_shared<Image>(properties);
+            m_image = std::make_shared<const Image>(properties);
         } else {
-            m_image = properties.getChild<Image>();
+            m_image = properties.getChild<const Image>();
         }
         m_exposure = properties.get<float>("exposure", 1);
 

@@ -4,9 +4,9 @@
 namespace lightwave {
 
 class Dielectric final : public Bsdf {
-    const ref<const Texture> m_ior;
-    const ref<const Texture> m_reflectance;
-    const ref<const Texture> m_transmittance;
+    const cref<Texture> m_ior;
+    const cref<Texture> m_reflectance;
+    const cref<Texture> m_transmittance;
 
 public:
     Dielectric(const Properties &properties)
@@ -32,10 +32,12 @@ public:
         const auto f = fresnelDielectric(Frame::absCosTheta(wo), eta);
         if (rng.next() <= f)
             return {.wi = reflect(wo, sgn * n),
-                    .weight = m_reflectance->evaluate(uv)};
+                    .weight = m_reflectance->evaluate(uv),
+                    .pdf = 0};
         else
             return {.wi = refract(wo, sgn * n, eta),
-                    .weight = m_transmittance->evaluate(uv) / sqr(eta)};
+                    .weight = m_transmittance->evaluate(uv) / sqr(eta),
+                    .pdf = 0};
     }
 
     std::string toString() const override {

@@ -1,5 +1,5 @@
 <integrator type="pathtracer" depth="6">
-    <image id="light_point_dielectric" />
+    <image id="light_point_roughdielectric" />
     <scene id="scene">
         <camera type="perspective" id="camera">
             <integer name="width" value="400" />
@@ -72,11 +72,12 @@
 
         <instance>
             <shape type="sphere" />
-            <bsdf type="roughdielectric">
+            <!-- <bsdf type="roughdielectric"> -->
+            <bsdf type="dielectric">
                 <texture name="ior" type="constant" value="1.5" />
-                <texture name="reflectance" type="constant" value="1,0.8,0.7" />
-                <texture name="transmittance" type="constant" value="0.7,0.8,1" />
-                <texture name="roughness" type="constant" value="0.2" />
+                <texture name="reflectance" type="constant" value="1" />
+                <texture name="transmittance" type="constant" value="1" />
+                <texture name="roughness" type="constant" value="0.01" />
             </bsdf>
             <transform>
                 <scale value="0.5" />
@@ -84,5 +85,5 @@
             </transform>
         </instance>
     </scene>
-    <sampler type="halton" count="128" />
+    <sampler type="independent" count="128" />
 </integrator>

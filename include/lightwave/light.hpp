@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <lightwave/core.hpp>
 #include <lightwave/color.hpp>
+#include <lightwave/core.hpp>
 #include <lightwave/math.hpp>
 
 namespace lightwave {
@@ -20,19 +20,20 @@ struct DirectLightSample {
     /// @brief The distance from the query point to the sampled point on the light source.
     float distance;
 
+    float pdf;
+
     /// @brief Return an invalid sample, used to denote that sampling has failed.
     static DirectLightSample invalid() {
         return {
             .wi = Vector(),
             .weight = Color(),
             .distance = 0,
+            .pdf = 0,
         };
     }
 
-    /// @brief Tests whether the sample is invalid (i.e., sampling has failed). 
-    bool isInvalid() const {
-        return weight == Color(0);
-    }
+    /// @brief Tests whether the sample is invalid (i.e., sampling has failed).
+    bool isInvalid() const { return weight == Color(0); }
 };
 
 /**
@@ -47,16 +48,28 @@ public:
      * @param origin The light receiving point that the emission and probability should be computed for.
      * @param rng A random number generator used to steer the sampling.
      */
-    virtual DirectLightSample sampleDirect(const Point &origin, Sampler &rng) const = 0;
+    virtual DirectLightSample sampleDirect(const Point &origin,
+                                           Sampler &rng) const = 0;
 
     /// @brief Returns whether this light source can be hit by rays (i.e., has an area that has been placed within the scene).
-    virtual bool canBeIntersected() const { return false; }
+    virtual bool canBeIntersected() const = 0;
 };
 
 /// @brief The result of evaluating a @ref BackgroundLight for a incident direction.
 struct BackgroundLightEval {
     /// @brief The emission strength of the background light in the queried direction.
     Color value;
+
+    float pdf;
+
+    static BackgroundLightEval invalid() {
+        return {
+            .value = Color(0),
+            .pdf = 0,
+        };
+    }
+
+    bool isInvalid() const { return value == Color(0); }
 };
 
 /**
@@ -73,7 +86,8 @@ public:
      */
     virtual BackgroundLightEval evaluate(const Vector &direction) const = 0;
 
-    DirectLightSample sampleDirect(const Point &origin, Sampler &rng) const override {
+    DirectLightSample sampleDirect(const Point &origin,
+                                   Sampler &rng) const override {
         return DirectLightSample::invalid();
     }
 

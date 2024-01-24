@@ -18,13 +18,16 @@ struct BsdfSample {
     /// @brief The weight of the sample, given by @code cos(theta) * B(wi, wo) /
     /// p(wi) @endcode
     Color weight;
+    /// @brief The probability of the sample
+    float pdf;
 
     /// @brief Return an invalid sample, used to denote that sampling has
     /// failed.
     static BsdfSample invalid() {
         return {
-            .wi     = Vector(0),
+            .wi = Vector(0),
             .weight = Color(0),
+            .pdf = 0,
         };
     }
 
@@ -37,11 +40,14 @@ struct BsdfEval {
     /// @brief The value of the Bsdf, given by @code cos(theta) * B(wi, wo)
     /// @endcode
     Color value;
+    /// @brief The probability of the sample
+    float pdf;
 
     /// @brief Indicates the the Bsdf is zero for the given pair of directions.
     static BsdfEval invalid() {
         return {
             .value = Color(0),
+            .pdf = 0,
         };
     }
 
@@ -62,9 +68,7 @@ public:
      * from the surface, in local coordinates.
      */
     virtual BsdfEval evaluate(const Point2 &uv, const Vector &wo,
-                              const Vector &wi) const {
-        NOT_IMPLEMENTED
-    }
+                              const Vector &wi) const = 0;
     /**
      * @brief Samples a direction according to the distribution of the Bsdf in
      * local coordinates (i.e., the normal is assumed to be [0,0,1]).

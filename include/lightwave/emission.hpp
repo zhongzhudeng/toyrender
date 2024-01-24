@@ -21,6 +21,8 @@ struct EmissionEval {
             .value = Color(0),
         };
     }
+
+    bool isInvalid() const { return value == Color(0); }
 };
 
 /// @brief An Emission, representing the light distribution of emissive surfaces.

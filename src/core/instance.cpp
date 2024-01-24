@@ -5,32 +5,21 @@
 
 namespace lightwave {
 
-
-
 void Instance::transformFrame(SurfaceEvent &surf) const {
-    surf.pdf /= m_transform->area_scale_to_world(surf.frame.tangent,
-                                                 surf.frame.bitangent);
-
     surf.position = m_transform->apply(surf.position);
     if (m_normal) {
-        Vector normal = m_normal->evaluate(surf.uv).data();
-        normal = (normal - Vector(0.5)) * 2;
-        normal.z() -= 1; 
-        surf.frame.normal =surf.frame.normal + normal.normalized();
-        surf.frame = Frame(surf.frame.normal.normalized());
+        Vector normal =
+            (2 * m_normal->evaluate(surf.uv) - Color::white()).data();
+        surf.frame.normal = normal.normalized();
+        surf.frame = Frame(surf.frame.normal);
     }
-    surf.frame.tangent = m_transform->apply(surf.frame.tangent).normalized();
-    surf.frame.bitangent =
-        m_transform->apply(surf.frame.bitangent).normalized();
-    if (m_flipNormal) {
-        surf.frame.bitangent = -surf.frame.bitangent;
-    }
+    auto t = m_transform->apply(surf.frame.tangent),
+         b = m_transform->apply(surf.frame.bitangent);
+    surf.pdf = surf.pdf / t.cross(b).length();
+    b = m_flipNormal ? -b : b;
 
-    surf.frame.normal =
-        surf.frame.tangent.cross(surf.frame.bitangent).normalized();
-
-    surf.frame.bitangent =
-        surf.frame.normal.cross(surf.frame.tangent).normalized();
+    surf.frame.normal = t.cross(b).normalized();
+    surf.frame = Frame(surf.frame.normal);
 }
 
 bool Instance::intersect(const Ray &worldRay, Intersection &its,
@@ -47,9 +36,11 @@ bool Instance::intersect(const Ray &worldRay, Intersection &its,
     }
 
     const float previousT = its.t;
-    const float scale = m_transform->line_scale_to_local(worldRay.direction);
+    auto localRay = m_transform->inverse(worldRay);
+    const float scale = localRay.direction.length();
+    localRay = localRay.normalized();
+
     its.t *= scale;
-    auto localRay = m_transform->inverse(worldRay).normalized();
 
     const bool wasIntersected = m_shape->intersect(localRay, its, rng);
     if (wasIntersected) {

@@ -1,5 +1,5 @@
 <integrator type="direct">
-  <image id="bunny_constant_independent_sampler" />
+  <image id="bunny_constant_halton_sampler" />
   <scene id="scene">
     <camera type="perspective" id="camera">
       <integer name="width" value="512" />
@@ -19,7 +19,7 @@
     </light>
 
     <instance>
-      <shape type="mesh" filename="../../tests/meshes/bunny.ply" />
+      <shape type="mesh" filename="../meshes/bunny.ply" />
       <bsdf type="diffuse">
         <texture name="albedo" type="constant" value="0.1,0.3,0.7" />
       </bsdf>
@@ -40,5 +40,5 @@
       </transform>
     </instance>
   </scene>
-  <sampler type="independent" count="64" />
+  <sampler type="halton" count="64" />
 </integrator>

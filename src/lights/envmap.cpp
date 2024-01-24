@@ -4,10 +4,10 @@ namespace lightwave {
 
 class EnvironmentMap final : public BackgroundLight {
     /// @brief The texture to use as background
-    const ref<const Texture> m_texture;
+    const cref<Texture> m_texture;
 
     /// @brief An optional transform from local-to-world space
-    const ref<const Transform> m_transform;
+    const cref<Transform> m_transform;
 
 public:
     EnvironmentMap(const Properties &properties)
@@ -21,22 +21,21 @@ public:
             local = m_transform->inverse(local).normalized();
         return {
             .value = m_texture->evaluate(toUV(local)),
+            .pdf = 1, //TODO: better sampling
         };
     }
 
+    //TODO: better sampling
     DirectLightSample sampleDirect(const Point &origin,
                                    Sampler &rng) const override {
         Vector direction = squareToUniformSphere(rng.next2D());
         auto E = evaluate(direction);
 
-        // implement better importance sampling here, if you ever need it
-        // (useful for environment maps with bright tiny light sources, like the
-        // sun for example)
-
         return {
             .wi = direction,
             .weight = E.value / Inv4Pi,
             .distance = Infinity,
+            .pdf = 1,
         };
     }
 

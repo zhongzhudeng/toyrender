@@ -2,8 +2,8 @@
 
 namespace lightwave {
 
-class Conductor final: public Bsdf {
-    const ref<const Texture> m_reflectance;
+class Conductor final : public Bsdf {
+    const cref<Texture> m_reflectance;
 
 public:
     Conductor(const Properties &properties)
@@ -20,14 +20,16 @@ public:
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         return {.wi = reflect(wo, Vector(0, 0, 1)),
-                .weight = m_reflectance->evaluate(uv)};
+                .weight = m_reflectance->evaluate(uv),
+                .pdf = 0};
     }
 
     std::string toString() const override {
-        return tfm::format("Conductor[\n"
-                           "  reflectance = %s\n"
-                           "]",
-                           indent(m_reflectance));
+        return tfm::format(
+            "Conductor[\n"
+            "  reflectance = %s\n"
+            "]",
+            indent(m_reflectance));
     }
 };
 

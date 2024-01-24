@@ -14,7 +14,7 @@
         </camera>
 
         <light type="envmap">
-            <texture type="image" filename="../../tests/textures/kloofendal_overcast_1k.hdr" />
+            <texture type="image" filename="../textures/kloofendal_overcast_1k.hdr" />
             <transform>
                 <rotate axis="0,1,0" angle="100" />
             </transform>

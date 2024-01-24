@@ -3,7 +3,7 @@
 namespace lightwave {
 
 class PathTracerIntegrator final : public SamplingIntegrator {
-    const ref<const Scene> m_scene;
+    const cref<Scene> m_scene;
     const int m_depth;
 
 public:
@@ -17,30 +17,31 @@ public:
         if (not test_its)
             return m_scene->evaluateBackground(ray.direction).value;
         if (test_its.instance->emission())
-            return test_its.frame.normal.dot(-ray.direction) > 0
-                       ? test_its.evaluateEmission()
-                       : Color::black();
+            return test_its.evaluateEmission();
 
         Color bsdf_color = Color::black(), light_color = Color::black(),
               weight = Color::white();
         LightSample ls;
         DirectLightSample dls;
+        BsdfEval eval;
 
         for (int depth = 1; depth < m_depth; depth++) {
             its = test_its;
             if (not m_scene->hasLights())
                 goto cont;
             ls = m_scene->sampleLight(rng);
-            if (ls.light->canBeIntersected()) [[unlikely]]
+            if (ls.light->canBeIntersected())
                 goto cont;
             dls = ls.light->sampleDirect(its.position, rng);
-            if (its.frame.normal.dot(dls.wi) <= 0)
+            if (dls.isInvalid())
                 goto cont;
             if (m_scene->intersect(
                     Ray(its.position, dls.wi), dls.distance, rng))
                 goto cont;
-            light_color += weight * its.evaluateBsdf(dls.wi).value *
-                           dls.weight / ls.probability;
+            eval = its.evaluateBsdf(dls.wi);
+            if (eval.isInvalid())
+                goto cont;
+            light_color += weight * eval.value * dls.weight / ls.probability;
         cont:
             auto bsdf = its.sampleBsdf(rng);
             weight *= bsdf.weight;
@@ -51,9 +52,7 @@ public:
                     weight * m_scene->evaluateBackground(r.direction).value;
                 break;
             } else if (test_its.instance->emission()) {
-                bsdf_color = test_its.frame.normal.dot(-r.direction) > 0
-                                 ? weight * test_its.evaluateEmission()
-                                 : Color::black();
+                bsdf_color = weight * test_its.evaluateEmission();
                 break;
             }
         }

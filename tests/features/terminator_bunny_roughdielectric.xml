@@ -88,7 +88,7 @@
     </instance>
 
     <instance>
-      <shape type="mesh" filename="../../tests/meshes/bunny.ply" />
+      <shape type="mesh" filename="../meshes/bunny.ply" />
       <bsdf type="roughdielectric">
         <texture name="ior" type="constant" value="1.5"/>
         <texture name="reflectance" type="constant" value="1,0.8,0.7"/>
@@ -105,7 +105,7 @@
     <instance>
       <shape type="rectangle" />
       <emission type="lambertian">
-        <texture name="emission" type="image" filename="../../tests/textures/bunninator.png"
+        <texture name="emission" type="image" filename="../textures/bunninator.png"
           exposure="1" />
       </emission>
       <transform>

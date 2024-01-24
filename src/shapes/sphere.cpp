@@ -1,6 +1,6 @@
 #include <lightwave.hpp>
 namespace lightwave {
-class Sphere final: public Shape {
+class Sphere final : public Shape {
     inline void populate(SurfaceEvent &surf, const Point &position) const {
         auto normal = Vector(position).normalized();
         surf.position = normal;
@@ -22,9 +22,10 @@ public:
 
         float b = 2 * o_r.dot(ray.direction);
 
-        const float delta = sqr(b) - 4 * o_r.lengthSquared() + 4;
-        if (delta < Epsilon) [[unlikely]]
+        float delta = sqr(b) - 4 * o_r.lengthSquared() + 4;
+        if (delta < -Epsilon) [[unlikely]]
             return false;
+        delta = std::max(0.f, delta);
 
         float t = (-b - std::sqrt(delta)) / 2;
         if (t < Epsilon) [[unlikely]] {

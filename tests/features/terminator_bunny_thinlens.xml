@@ -90,7 +90,7 @@
         </instance>
 
         <instance>
-            <shape type="mesh" filename="../../tests/meshes/bunny.ply" />
+            <shape type="mesh" filename="../meshes/bunny.ply" />
             <bsdf type="principled">
                 <texture name="baseColor" type="constant" value="1" />
                 <texture name="specular" type="constant" value="1" />
@@ -107,7 +107,7 @@
         <instance>
             <shape type="rectangle" />
             <emission type="lambertian">
-                <texture name="emission" type="image" filename="../../tests/textures/bunninator.png"
+                <texture name="emission" type="image" filename="../textures/bunninator.png"
                     exposure="1" />
             </emission>
             <transform>

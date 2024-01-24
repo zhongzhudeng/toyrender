@@ -171,33 +171,6 @@ public:
         return m_transform.submatrix<3, 3>(0, 0).determinant();
     }
 
-    inline float line_scale_to_world(const Vector &direction) const {
-        return apply(direction).length();
-    }
-    inline float line_scale_to_local(const Vector &direction) const {
-        return inverse(direction).length();
-    }
-
-    inline float area_scale_to_world(const Vector &tangent,
-                                     const Vector &bitangent) const {
-        auto t = apply(tangent);
-        auto b = apply(bitangent);
-        return t.cross(b).length();
-    }
-    inline float area_scale_to_local(const Vector &tangent,
-                                     const Vector &bitangent) const {
-        auto t = inverse(tangent);
-        auto b = inverse(bitangent);
-        return t.cross(b).length();
-    }
-
-    inline float volume_scale_to_world() const {
-        return std::abs(determinant());
-    }
-    inline float volume_scale_to_local() const {
-        return std::abs(1.f / determinant());
-    }
-
     std::string toString() const override {
         return tfm::format(
             "Transform[\n"

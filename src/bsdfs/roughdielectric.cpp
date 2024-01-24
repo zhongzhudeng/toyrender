@@ -5,10 +5,10 @@
 namespace lightwave {
 
 class RoughDielectric final : public Bsdf {
-    const ref<const Texture> m_ior;
-    const ref<const Texture> m_reflectance;
-    const ref<const Texture> m_transmittance;
-    const ref<const Texture> m_roughness;
+    const cref<Texture> m_ior;
+    const cref<Texture> m_reflectance;
+    const cref<Texture> m_transmittance;
+    const cref<Texture> m_roughness;
 
 public:
     RoughDielectric(const Properties &properties)
@@ -21,7 +21,7 @@ public:
                       const Vector &wi) const override {
         const auto cosTheta_o = Frame::cosTheta(wo),
                    cosTheta_i = Frame::cosTheta(wi);
-        if (cosTheta_i == 0 || cosTheta_o == 0)
+        if (std::abs(cosTheta_i) < Epsilon || std::abs(cosTheta_o) < Epsilon)
             return BsdfEval::invalid();
 
         const auto eta =
@@ -29,8 +29,8 @@ public:
         const bool reflect = cosTheta_i * cosTheta_o > 0;
         const auto etap = reflect ? 1 : eta;
         Vector wm = wi * etap + wo;
-        if (wm.lengthSquared() == 0)
-            return BsdfEval::invalid();
+        // if (wm.length() < Epsilon)
+        //     return BsdfEval::invalid();
         wm = std::copysign(1.f, Frame::cosTheta(wm)) * wm.normalized();
 
         if (wm.dot(wi) * cosTheta_i < 0 || wm.dot(wo) * cosTheta_o < 0)
@@ -43,12 +43,18 @@ public:
         auto D = microfacet::evaluateGGX(alpha, wm);
         if (reflect) {
             const auto R = m_reflectance->evaluate(uv);
-            return {.value = R * f * G * D * microfacet::detReflection(wm, wo)};
+            return {
+                .value = R * f * G * D * microfacet::detReflection(wm, wo),
+                .pdf = 0,
+            };
         } else {
             const auto T = m_transmittance->evaluate(uv);
-            return {.value = T * (1 - f) * G * D *
-                             microfacet::detRefraction(wm, wi, wo, eta) /
-                             std::abs(cosTheta_o)};
+            return {
+                .value = T * (1 - f) * G * D *
+                         microfacet::detRefraction(wm, wi, wo, eta) /
+                         std::abs(cosTheta_o),
+                .pdf = 0,
+            };
         }
     }
 
@@ -69,7 +75,11 @@ public:
             w = m_transmittance->evaluate(uv) / sqr(eta);
 
         const auto G1_wi = microfacet::smithG1(alpha, wm, wi);
-        return {wi, w * G1_wi * Frame::absCosTheta(wi)};
+        return {
+            .wi = wi,
+            .weight = w * G1_wi * Frame::absCosTheta(wi),
+            .pdf = 0,
+        };
     }
 
     std::string toString() const override {

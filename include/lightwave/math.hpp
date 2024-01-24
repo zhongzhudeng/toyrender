@@ -761,7 +761,6 @@ struct SurfaceEvent {
     /// @brief The instance object associated with the surface.
     const Instance *instance = nullptr;
 };
-
 /// @brief Describes an intersection of a ray with a surface.
 struct Intersection : public SurfaceEvent {
     /// @brief The direction of the ray that hit the surface, pointing away from the surface.

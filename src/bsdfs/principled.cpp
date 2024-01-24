@@ -9,12 +9,19 @@ struct DiffuseLobe {
     Color color;
 
     BsdfEval evaluate(const Vector &wo, const Vector &wi) const {
-        return {.value = Frame::cosTheta(wi) * color * InvPi};
+        return {
+            .value = Frame::cosTheta(wi) * color * InvPi,
+            .pdf = Frame::cosTheta(wi),
+        };
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
         auto wi = squareToCosineHemisphere(rng.next2D());
-        return {.wi = wi, .weight = color};
+        return {
+            .wi = wi,
+            .weight = color,
+            .pdf = Frame::cosTheta(wi),
+        };
     }
 };
 
@@ -27,22 +34,23 @@ struct MetallicLobe {
         auto D = microfacet::evaluateGGX(alpha, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi),
              G1_wo = microfacet::smithG1(alpha, wm, wo);
-        return {.value = color * D * G1_wi * G1_wo *
-                         std::copysign(1.f, Frame::cosTheta(wi)) /
-                         (4 * Frame::absCosTheta(wo))};
+        return {.value = color * D * G1_wi * G1_wo / (4 * Frame::cosTheta(wo)),
+                .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo)};
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
         auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
         auto wi = reflect(wo, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi);
-        return {.wi = wi,
-                .weight =
-                    color * G1_wi * std::copysign(1.f, Frame::cosTheta(wi))};
+        return {
+            .wi = wi,
+            .weight = color * G1_wi,
+            .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo),
+        };
     }
 };
 
-class Principled final: public Bsdf {
+class Principled final : public Bsdf {
     ref<Texture> m_baseColor;
     ref<Texture> m_roughness;
     ref<Texture> m_metallic;
@@ -76,7 +84,7 @@ class Principled final: public Bsdf {
         return {
             .diffuseSelectionProb =
                 totalAlbedo > 0 ? diffuseAlbedo / totalAlbedo : 1.0f,
-            .diffuse  = diffuseLobe,
+            .diffuse = diffuseLobe,
             .metallic = metallicLobe,
         };
     }
@@ -85,41 +93,53 @@ public:
     Principled(const Properties &properties) {
         m_baseColor = properties.get<Texture>("baseColor");
         m_roughness = properties.get<Texture>("roughness");
-        m_metallic  = properties.get<Texture>("metallic");
-        m_specular  = properties.get<Texture>("specular");
+        m_metallic = properties.get<Texture>("metallic");
+        m_specular = properties.get<Texture>("specular");
     }
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
+        if (Frame::cosTheta(wi) <= 0)
+            return BsdfEval::invalid();
         const auto combination = combine(uv, wo);
-        return {.value = combination.diffuse.evaluate(wo, wi).value +
-                         combination.metallic.evaluate(wo, wi).value};
+        const auto diffuse = combination.diffuse.evaluate(wo, wi);
+        const auto metallic = combination.metallic.evaluate(wo, wi);
+        return {
+            .value = diffuse.value + metallic.value,
+            .pdf = diffuse.pdf / combination.diffuseSelectionProb +
+                   metallic.pdf / (1 - combination.diffuseSelectionProb),
+        };
     }
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
         const auto combination = combine(uv, wo);
         BsdfSample bsdf;
-        if (rng.next() < combination.diffuseSelectionProb ) {
+        if (rng.next() < combination.diffuseSelectionProb) {
             bsdf = combination.diffuse.sample(wo, rng);
             bsdf.weight /= combination.diffuseSelectionProb;
+            bsdf.pdf *= combination.diffuseSelectionProb;
         } else {
             bsdf = combination.metallic.sample(wo, rng);
             bsdf.weight /= (1 - combination.diffuseSelectionProb);
+            bsdf.pdf /= (1 - combination.diffuseSelectionProb);
         }
 
         return bsdf;
     }
 
     std::string toString() const override {
-        return tfm::format("Principled[\n"
-                           "  baseColor = %s,\n"
-                           "  roughness = %s,\n"
-                           "  metallic  = %s,\n"
-                           "  specular  = %s,\n"
-                           "]",
-                           indent(m_baseColor), indent(m_roughness),
-                           indent(m_metallic), indent(m_specular));
+        return tfm::format(
+            "Principled[\n"
+            "  baseColor = %s,\n"
+            "  roughness = %s,\n"
+            "  metallic  = %s,\n"
+            "  specular  = %s,\n"
+            "]",
+            indent(m_baseColor),
+            indent(m_roughness),
+            indent(m_metallic),
+            indent(m_specular));
     }
 };
 

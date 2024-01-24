@@ -38,13 +38,13 @@
         <instance>
             <shape type="rectangle" />
             <bsdf type="diffuse">
-                <texture name="albedo" type="image" filename="textures/brick_wall_basecolor.jpg" />
+                <texture name="albedo" type="image" filename="../textures/brick_wall_basecolor.jpg" />
             </bsdf>
             <transform>
                 <scale value="2" />
                 <rotate axis="1,0,0" angle="90" />
             </transform>
-            <texture name="normal" type="normal" filename="textures/brick_wall_normal.jpg" />
+            <texture name="normal" type="normal" filename="../textures/brick_wall_normal.jpg" />
         </instance>
     </scene>
     <sampler type="independent" count="128" />
