@@ -39,11 +39,11 @@ public:
         for (auto &child : m_children) child->markAsVisible();
     }
 
-    AreaSample sampleArea(Sampler &rng) const override {
+    AreaSample sampleArea(const Point &origin, Sampler &rng) const override {
         int childIndex = int(rng.next() * m_children.size());
         childIndex = std::min(childIndex, int(m_children.size()) - 1);
 
-        AreaSample sample = m_children[childIndex]->sampleArea(rng);
+        AreaSample sample = m_children[childIndex]->sampleArea(origin, rng);
         sample.pdf /= m_children.size();
         return sample;
     }

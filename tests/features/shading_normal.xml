@@ -1,4 +1,4 @@
-<integrator type="direct">
+<integrator type="pathtracer" mis="true">
     <image id="shading_normal" />
     <scene>
         <camera type="perspective" id="camera">
@@ -17,7 +17,7 @@
         <instance>
             <shape type="sphere" />
             <emission type="lambertian">
-                <texture name="emission" type="constant" value="3,0.5,0.1" />
+                <texture name="emission" type="constant" value="3" />
             </emission>
             <transform>
                 <scale value="1" />

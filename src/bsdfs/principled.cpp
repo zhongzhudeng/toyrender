@@ -106,8 +106,8 @@ public:
         const auto metallic = combination.metallic.evaluate(wo, wi);
         return {
             .value = diffuse.value + metallic.value,
-            .pdf = diffuse.pdf / combination.diffuseSelectionProb +
-                   metallic.pdf / (1 - combination.diffuseSelectionProb),
+            .pdf = diffuse.pdf * combination.diffuseSelectionProb +
+                   metallic.pdf * (1 - combination.diffuseSelectionProb),
         };
     }
 
@@ -122,7 +122,7 @@ public:
         } else {
             bsdf = combination.metallic.sample(wo, rng);
             bsdf.weight /= (1 - combination.diffuseSelectionProb);
-            bsdf.pdf /= (1 - combination.diffuseSelectionProb);
+            bsdf.pdf *= (1 - combination.diffuseSelectionProb);
         }
 
         return bsdf;

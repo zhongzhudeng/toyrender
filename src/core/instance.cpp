@@ -6,13 +6,13 @@
 namespace lightwave {
 
 void Instance::transformFrame(SurfaceEvent &surf) const {
-    surf.position = m_transform->apply(surf.position);
     if (m_normal) {
         Vector normal =
             (2 * m_normal->evaluate(surf.uv) - Color::white()).data();
-        surf.frame.normal = normal.normalized();
-        surf.frame = Frame(surf.frame.normal);
+        normal = surf.frame.toLocal(normal).normalized();
+        surf.frame = Frame(normal);
     }
+    surf.position = m_transform->apply(surf.position);
     auto t = m_transform->apply(surf.frame.tangent),
          b = m_transform->apply(surf.frame.bitangent);
     surf.pdf = surf.pdf / t.cross(b).length();
@@ -88,12 +88,12 @@ Point Instance::getCentroid() const {
     return m_transform->apply(m_shape->getCentroid());
 }
 
-AreaSample Instance::sampleArea(Sampler &rng) const {
-    AreaSample sample = m_shape->sampleArea(rng);
+AreaSample Instance::sampleArea(const Point &reference, Sampler &rng) const {
+    const Point ref_local = m_transform->inverse(reference);
+    AreaSample sample = m_shape->sampleArea(ref_local, rng);
     transformFrame(sample);
     return sample;
 }
-
 }
 
 REGISTER_CLASS(Instance, "instance", "default")

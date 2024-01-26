@@ -67,7 +67,7 @@ public:
         return Point(0);
     }
 
-    AreaSample sampleArea(Sampler &rng) const override {
+    AreaSample sampleArea(const Point &origin, Sampler &rng) const override {
         Point2 rnd = rng.next2D(); // sample a random point in [0,0]..[1,1]
         Point position { 2 * rnd.x() - 1, 2 * rnd.y() - 1, 0 }; // stretch the random point to [-1,-1]..[+1,+1] and set z=0
 

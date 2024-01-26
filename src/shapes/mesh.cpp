@@ -114,7 +114,7 @@ public:
         buildAccelerationStructure();
     }
 
-    AreaSample sampleArea(Sampler &rng) const override{
+    AreaSample sampleArea(const Point &group, Sampler &rng) const override{
         // only implement this if you need triangle mesh area light sampling for your rendering competition
         NOT_IMPLEMENTED}
 

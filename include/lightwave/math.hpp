@@ -621,6 +621,11 @@ inline Point toCartesian(const Point2 &uv) {
     return w;
 }
 
+inline Vector sphericalDirection(float sinTheta, float cosTheta, float phi) {
+    return Vector(std::clamp(sinTheta, -1.f, 1.f) * std::cos(phi),
+                  std::clamp(sinTheta, -1.f, 1.f) * std::sin(phi),
+                  std::clamp(cosTheta, -1.f, 1.f));
+}
 
 /// @brief Describes a ray that propagates through space.
 struct Ray {

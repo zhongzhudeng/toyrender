@@ -84,7 +84,7 @@
 		<ref id="light_big" />
 	</light>
 
-	<instance>
+	<instance id="rectangle1">
 		<shape type="rectangle" />
 		<ref id="Diffuse" />
 		<transform>
@@ -94,7 +94,7 @@
 		</transform>
 	</instance>
 
-	<instance>
+	<instance id="rectangle2">
 		<shape type="rectangle" />
 		<ref id="Diffuse" />
 		<transform>
@@ -105,7 +105,7 @@
 		</transform>
 	</instance>
 
-	<instance>
+	<instance id="rectangle3">
 		<shape type="rectangle" />
 		<ref id="Smooth" />
 		<transform>
@@ -118,7 +118,7 @@
 		</transform>
 	</instance>
 
-	<instance>
+	<instance id="rectangle4">
 		<shape type="rectangle" />
 		<ref id="Glossy" />
 		<transform>
@@ -130,7 +130,7 @@
 		</transform>
 	</instance>
 
-	<instance>
+	<instance id="rectangle5">
 		<shape type="rectangle" />
 		<ref id="Rough" />
 		<transform>
@@ -142,7 +142,7 @@
 		</transform>
 	</instance>
 
-	<instance>
+	<instance id="rectangle6">
 		<shape type="rectangle" />
 		<ref id="SuperRough" />
 		<transform>
@@ -156,19 +156,68 @@
 </scene>
 
 <test type="image" id="veach-bsdf" me="5e-4">
-    <integrator type="mispathtracer" depth="5" nee="false">
-        <ref id="scene"/>
-        <sampler type="independent" count="256"/>
-    </integrator>
+	<integrator type="bsdfpathtracer" depth="5">
+		<ref id="scene" />
+		<sampler type="independent" count="64" />
+	</integrator>
 </test>
-<test type="image" id="veach-nee" me="3e-2" mae="3e-1">
-    <integrator type="mispathtracer" depth="5" nee="true">
-        <ref id="scene"/>
-        <sampler type="independent" count="64"/>
-    </integrator>
+
+<test type="image" id="veach-nee" mae="3e-1">
+	<integrator type="neepathtracer" depth="5">
+		<scene>
+			<ref id="camera" />
+			<instance id="light_small_nee">
+				<shape type="sphere" />
+				<emission type="lambertian">
+					<texture name="emission" type="constant" value="40,25,20" />
+				</emission>
+				<transform>
+					<scale value="0.05" />
+					<translate x="-0.15" y="6.5" z="2.8" />
+				</transform>
+			</instance>
+			<light type="area" intersectable="false">
+				<ref id="light_small_nee" />
+			</light>
+			<instance id="light_medium_nee">
+				<shape type="sphere" />
+				<emission type="lambertian">
+					<texture name="emission" type="constant" value="2.5,7.5,12.5" />
+				</emission>
+				<transform>
+					<scale value="0.5" />
+					<translate x="-0.15" y="6.5" z="0.8" />
+				</transform>
+			</instance>
+			<light type="area" intersectable="false">
+				<ref id="light_medium_nee" />
+			</light>
+			<instance id="light_big_nee">
+				<shape type="sphere" />
+				<emission type="lambertian">
+					<texture name="emission" type="constant" value="6,1,4" />
+				</emission>
+				<transform>
+					<scale value="1" />
+					<translate x="-0.15" y="6.5" z="-2" />
+				</transform>
+			</instance>
+			<light type="area" intersectable="false">
+				<ref id="light_big_nee" />
+			</light>
+			<ref id="rectangle1" />
+			<ref id="rectangle2" />
+			<ref id="rectangle3" />
+			<ref id="rectangle4" />
+			<ref id="rectangle5" />
+			<ref id="rectangle6" />
+		</scene>
+		<sampler type="independent" count="64" />
+	</integrator>
 </test>
+
 <test type="image" id="veach-mis">
-	<integrator type="mispathtracer" depth="5" nee="true" mis="true">
+	<integrator type="mispathtracer" depth="5">
 		<ref id="scene" />
 		<sampler type="independent" count="64" />
 	</integrator>

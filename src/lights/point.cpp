@@ -22,10 +22,6 @@ public:
             .pdf = 0,
         };
     }
-    // DirectLightEval evaluate(const Intersection &xp,
-    //                          const Intersection &x) const override {
-    //     NOT_IMPLEMENTED
-    // }
 
     bool canBeIntersected() const override { return false; }
 

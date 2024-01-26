@@ -2,17 +2,12 @@
 
 namespace lightwave {
 
-class MISPathTracerIntegrator final : public SamplingIntegrator {
+class NeePathTracerIntegrator final : public SamplingIntegrator {
     const cref<Scene> m_scene;
     const int m_depth;
 
-    float balanceHeuristic(float f, float g) { return f / (f + g); }
-    float powerHeuristic(float f, float g) {
-        return sqr(f) / (sqr(f) + sqr(g));
-    }
-
 public:
-    MISPathTracerIntegrator(const Properties &properties)
+    NeePathTracerIntegrator(const Properties &properties)
         : SamplingIntegrator(properties),
           m_scene(properties.getChild<Scene>("scene")),
           m_depth(properties.get<int>("depth", 2)) {}
@@ -25,12 +20,11 @@ public:
         LightSample ls;
         DirectLightSample dls;
         BsdfEval be;
-        BsdfSample bs;
-        float w;
+        auto r = ray;
 
-        its = m_scene->intersect(ray, rng);
+        its = m_scene->intersect(r, rng);
         if (not its)
-            return m_scene->evaluateBackground(ray.direction).value;
+            return m_scene->evaluateBackground(r.direction).value;
         if (its.instance->emission())
             return its.evaluateEmission();
 
@@ -38,39 +32,30 @@ public:
             if (not m_scene->hasLights())
                 goto cont;
             ls = m_scene->sampleLight(rng);
+            if (ls.light->canBeIntersected())
+                goto cont;
             dls = ls.light->sampleDirect(its.position, rng);
-            if (dls.isInvalid())
+            if (dls.isInvalid()) [[unlikely]]
                 goto cont;
             if (m_scene->intersect(
                     Ray(its.position, dls.wi), dls.distance, rng))
                 goto cont;
             be = its.evaluateBsdf(dls.wi);
-            if (be.isInvalid()) [[unlikely]]
+            if (be.isInvalid())
                 goto cont;
-            w = ls.light->canBeIntersected()
-                    ? powerHeuristic(dls.pdf * ls.probability, be.pdf)
-                    : 1;
-            light_color += w * weight * be.value * dls.weight / ls.probability;
+            light_color += weight * be.value * dls.weight / ls.probability;
         cont:
-            bs = its.sampleBsdf(rng);
+            auto bs = its.sampleBsdf(rng);
             weight *= bs.weight;
-            auto r = Ray(its.position, bs.wi);
+            r = Ray(its.position, bs.wi);
             its = m_scene->intersect(r, rng);
             if (not its) {
                 bsdf_color =
                     weight * m_scene->evaluateBackground(r.direction).value;
                 break;
-            } else if (its.instance->emission()) {
-                auto light = its.instance->light();
-                w = light ? powerHeuristic(
-                                bs.pdf,
-                                m_scene->lightSelectionProbability(light) *
-                                    its.pdf * sqr(its.t) /
-                                    its.frame.normal.dot(its.wo))
-                          : 1;
-                bsdf_color = w * weight * its.evaluateEmission();
-                break;
             }
+            if (its.instance->emission())
+                break;
         }
         return bsdf_color + light_color;
     }
@@ -91,4 +76,4 @@ public:
 
 }
 
-REGISTER_INTEGRATOR(MISPathTracerIntegrator, "mispathtracer")
+REGISTER_INTEGRATOR(NeePathTracerIntegrator, "neepathtracer")

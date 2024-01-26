@@ -13,46 +13,50 @@ public:
           m_depth(properties.get<int>("depth", 2)) {}
 
     Color Li(const Ray &ray, Sampler &rng) override {
-        Intersection its, test_its = m_scene->intersect(ray, rng);
-        if (not test_its)
-            return m_scene->evaluateBackground(ray.direction).value;
-        if (test_its.instance->emission())
-            return test_its.evaluateEmission();
-
-        Color bsdf_color = Color::black(), light_color = Color::black(),
-              weight = Color::white();
+        Intersection its;
+        Color bsdf_color;
+        Color light_color;
+        Color weight = Color::white();
         LightSample ls;
         DirectLightSample dls;
-        BsdfEval eval;
+        BsdfEval be;
+        BsdfSample bs;
+
+        its = m_scene->intersect(ray, rng);
+        if (not its)
+            return m_scene->evaluateBackground(ray.direction).value;
+        if (its.instance->emission())
+            return its.evaluateEmission();
 
         for (int depth = 1; depth < m_depth; depth++) {
-            its = test_its;
             if (not m_scene->hasLights())
                 goto cont;
             ls = m_scene->sampleLight(rng);
             if (ls.light->canBeIntersected())
                 goto cont;
             dls = ls.light->sampleDirect(its.position, rng);
-            if (dls.isInvalid())
+            if (dls.isInvalid()) [[unlikely]]
                 goto cont;
             if (m_scene->intersect(
                     Ray(its.position, dls.wi), dls.distance, rng))
                 goto cont;
-            eval = its.evaluateBsdf(dls.wi);
-            if (eval.isInvalid())
+            be = its.evaluateBsdf(dls.wi);
+            if (be.isInvalid())
                 goto cont;
-            light_color += weight * eval.value * dls.weight / ls.probability;
+            light_color += weight * be.value * dls.weight / ls.probability;
         cont:
-            auto bsdf = its.sampleBsdf(rng);
-            weight *= bsdf.weight;
-            auto r = Ray(its.position, bsdf.wi);
-            test_its = m_scene->intersect(r, rng);
-            if (not test_its) {
+            bs = its.sampleBsdf(rng);
+            weight *= bs.weight;
+            auto r = Ray(its.position, bs.wi);
+            its = m_scene->intersect(r, rng);
+            if (not its) {
                 bsdf_color =
                     weight * m_scene->evaluateBackground(r.direction).value;
                 break;
-            } else if (test_its.instance->emission()) {
-                bsdf_color = weight * test_its.evaluateEmission();
+            } else if (its.instance->emission()) {
+                auto light = its.instance->light();
+                if (not light)
+                    bsdf_color = weight * its.evaluateEmission();
                 break;
             }
         }
@@ -62,7 +66,7 @@ public:
     /// @brief An optional textual representation of this class, which can be useful for debugging.
     std::string toString() const override {
         return tfm::format(
-            "PathTracerIntegrator[\n"
+            "MISPathTracerIntegrator[\n"
             "  depth = %d\n"
             "  sampler = %s,\n"
             "  image = %s,\n"
