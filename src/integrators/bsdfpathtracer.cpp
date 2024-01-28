@@ -15,21 +15,20 @@ public:
     Color Li(const Ray &ray, Sampler &rng) override {
         Intersection its;
         Color weight = Color::white();
-        auto r = ray;
+        // auto r = ray;
 
-        its = m_scene->intersect(r, rng);
+        its = m_scene->intersect(ray, rng);
         if (not its)
-            return m_scene->evaluateBackground(r.direction).value;
+            return m_scene->evaluateBackground(ray.direction).value;
         if (its.instance->emission())
             return its.evaluateEmission();
 
         for (int depth = 1; depth < m_depth; depth++) {
             auto bs = its.sampleBsdf(rng);
             weight *= bs.weight;
-            r = Ray(its.position, bs.wi);
-            its = m_scene->intersect(r, rng);
+            its = m_scene->intersect(Ray(its.position, bs.wi), rng);
             if (not its)
-                return weight * m_scene->evaluateBackground(r.direction).value;
+                return weight * m_scene->evaluateBackground(bs.wi).value;
             if (its.instance->emission())
                 return weight * its.evaluateEmission();
         }

@@ -67,43 +67,6 @@
     <sampler type="independent" count="64" />
 </integrator>
 
-<integrator type="neepathtracer">
-    <image id="area_light_nee" />
-    <scene>
-        <ref id="camera" />
-        <instance id="orange_nee">
-            <shape type="sphere" />
-            <emission type="lambertian">
-                <texture name="emission" type="constant" value="2,0.5,0.1" />
-            </emission>
-            <transform>
-                <scale value="2" />
-                <translate x="2.5" y="-2" z="1" />
-            </transform>
-        </instance>
-        <light type="area" intersectable="false">
-            <ref id="orange_nee" />
-        </light>
-        <instance id="blue_nee">
-            <shape type="sphere" />
-            <emission type="lambertian">
-                <texture name="emission" type="constant" value="3.2,11.2,48" />
-            </emission>
-            <transform>
-                <scale value="0.5" />
-                <translate x="-1" y="-0.5" z="1" />
-            </transform>
-        </instance>
-        <light type="area" intersectable="false">
-            <ref id="blue_nee" />
-        </light>
-
-        <ref id="bunny" />
-        <ref id="rectangle" />
-    </scene>
-    <sampler type="independent" count="64" />
-</integrator>
-
 <integrator type="pathtracer">
     <image id="area_light_combined" />
     <scene>
@@ -136,20 +99,20 @@
         <ref id="rectangle" />
     </scene>
     <sampler type="independent" count="64" />
-</integrator>
+</integrator> 
 
 <integrator type="mispathtracer">
     <image id="area_light_mis" />
     <ref id="scene" />
     <sampler type="independent" count="64" />
-</integrator>
+</integrator> 
 
 <integrator type="neepathtracer">
     <image id="area_light_improved_area_sample" />
     <scene>
         <ref id="camera" />
         <instance id="orange_improved_sample">
-            <shape type="sphere" improvedsample="true"/>
+            <shape type="sphere" />
             <emission type="lambertian">
                 <texture name="emission" type="constant" value="2,0.5,0.1" />
             </emission>
@@ -162,7 +125,7 @@
             <ref id="orange_improved_sample" />
         </light>
         <instance id="blue_improved_sample">
-            <shape type="sphere" improvedsample="true"/>
+            <shape type="sphere"/>
             <emission type="lambertian">
                 <texture name="emission" type="constant" value="3.2,11.2,48" />
             </emission>

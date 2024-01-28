@@ -20,6 +20,7 @@ public:
             .weight = m_intensity / ol.lengthSquared(),
             .distance = ol.length(),
             .pdf = 0,
+            .cosTheta_o = 0,
         };
     }
 

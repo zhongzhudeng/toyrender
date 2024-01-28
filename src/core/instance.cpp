@@ -17,9 +17,7 @@ void Instance::transformFrame(SurfaceEvent &surf) const {
          b = m_transform->apply(surf.frame.bitangent);
     surf.pdf = surf.pdf / t.cross(b).length();
     b = m_flipNormal ? -b : b;
-
-    surf.frame.normal = t.cross(b).normalized();
-    surf.frame = Frame(surf.frame.normal);
+    surf.frame = Frame(t.cross(b).normalized());
 }
 
 bool Instance::intersect(const Ray &worldRay, Intersection &its,

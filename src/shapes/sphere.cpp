@@ -9,44 +9,44 @@ public:
 
     bool intersect(const Ray &ray, Intersection &its,
                    Sampler &rng) const override {
+        auto dc = Vector(ray.origin);
+        auto dc_len2 = dc.lengthSquared();
+        auto [dc_len, dcn] = dc.lengthAndNormalized();
 
-        auto o_r = Vector(ray.origin);
-        if (std::abs(o_r.length() - 1.f) < 1e-4 && o_r.dot(ray.direction) >= 0)
+        if (std::abs(dc_len - 1.f) < Epsilon && dc.dot(ray.direction) >= 0)
             return false;
 
-        float b = 2 * o_r.dot(ray.direction);
+        float b = 2 * dc.dot(ray.direction);
 
-        float delta = sqr(b) - 4 * o_r.lengthSquared() + 4;
-        if (delta <= 1e-4) [[unlikely]]
+        float delta = sqr(b) - 4 * dc_len2 + 4;
+        if (delta <= Epsilon) [[unlikely]]
             return false;
 
         float t = (-b - std::sqrt(delta)) / 2;
-        if (t < 1e-4) [[unlikely]] {
+        if (t < Epsilon) [[unlikely]] {
             t = (-b + std::sqrt(delta)) / 2;
-            if (t < 1e-4) [[unlikely]]
+            if (t < Epsilon) [[unlikely]]
                 return false;
         }
         if (its.t < t) [[unlikely]]
             return false;
         its.t = t;
-        auto n = Vector(ray(t)).normalized();
-        its.position = Point(n);
-        its.frame = Frame(n);
-        its.uv = toUV(n);
-        if (m_improved_sample) {
-            float sinThetaMax = 1.f / o_r.length();
-            float sin2ThetaMax = sqr(sinThetaMax);
-            float oneMinusCosThetaMax;
-            if (sin2ThetaMax < 0.00068523f) {
-                oneMinusCosThetaMax = sin2ThetaMax / 2;
-            } else {
-                float cosThetaMax = safe_sqrt(1 - sin2ThetaMax);
-                oneMinusCosThetaMax = 1 - cosThetaMax;
-            }
-            its.pdf = Inv2Pi / oneMinusCosThetaMax;
+        Vector w = Vector(ray(t)).normalized();
+        its.position = w;
+        its.frame = Frame(w);
+        its.uv = toUV(w);
+
+        Vector xxp = dc - w;
+        float sinThetaMax = 1.f / dc_len;
+        float sin2ThetaMax = sqr(sinThetaMax);
+        float oneMinusCosThetaMax;
+        if (sin2ThetaMax < 0.00068523f) {
+            oneMinusCosThetaMax = sin2ThetaMax / 2;
         } else {
-            its.pdf = Inv4Pi;
+            float cosThetaMax = safe_sqrt(1 - sin2ThetaMax);
+            oneMinusCosThetaMax = 1 - cosThetaMax;
         }
+        its.pdf = Inv2Pi / (xxp.lengthSquared() * oneMinusCosThetaMax);
 
         return true;
     }
@@ -59,41 +59,36 @@ public:
 
     AreaSample sampleArea(const Point &origin, Sampler &rng) const override {
         AreaSample as;
-        if (m_improved_sample) {
-            auto [dc, n] = Vector(origin).lengthAndNormalized();
-            Frame sampleingFrame(n);
-            float sinThetaMax = 1.f / dc;
-            float sin2ThetaMax = sqr(sinThetaMax);
-            float cosThetaMax = safe_sqrt(1 - sin2ThetaMax);
-            float oneMinusCosThetaMax = 1 - cosThetaMax;
-            Point2 u = rng.next2D();
-            float cosTheta = (cosThetaMax - 1) * u[0] + 1;
-            float sin2Theta = 1 - sqr(cosTheta);
+        Vector dc = Vector(origin);
+        Vector dcn = dc.normalized();
 
-            if (sin2ThetaMax < 0.00068523f) {
-                sin2Theta = sin2ThetaMax * u[0];
-                cosTheta = std::sqrt(1 - sin2Theta);
-                oneMinusCosThetaMax = sin2ThetaMax / 2;
-            }
+        Point2 u = rng.next2D();
 
-            float cosAlpha =
-                sin2Theta / sinThetaMax +
-                cosTheta * safe_sqrt(1 - sin2Theta / sqr(sinThetaMax));
-            float sinAlpha = safe_sqrt(1 - sqr(cosAlpha));
-            float phi = u[1] * 2 * Pi;
-            Vector w = sphericalDirection(sinAlpha, cosAlpha, phi);
-            w = sampleingFrame.toWorld(w).normalized();
-            assert(w.dot(n) >= 0);
-            as.position = w;
-            as.frame = Frame(w);
-            as.uv = toUV(as.position);
-            as.pdf = Inv2Pi / oneMinusCosThetaMax;
+        float len = dc.length();
+        float sinThetaMax = 1.f / len;
+        float sin2ThetaMax = sqr(sinThetaMax);
+        float cosThetaMax, oneMinusCosThetaMax, cosTheta, sin2Theta;
+        if (sin2ThetaMax < 0.00068523f) [[unlikely]] {
+            sin2Theta = sin2ThetaMax * u[0];
+            cosTheta = std::sqrt(1 - sin2Theta);
+            oneMinusCosThetaMax = sin2ThetaMax / 2;
         } else {
-            as.position = squareToUniformSphere(rng.next2D());
-            as.frame = Frame(Vector(as.position));
-            as.uv = toUV(as.position);
-            as.pdf = Inv4Pi;
+            cosThetaMax = safe_sqrt(1 - sin2ThetaMax);
+            oneMinusCosThetaMax = 1 - cosThetaMax;
+            cosTheta = (cosThetaMax - 1) * u[0] + 1;
+            sin2Theta = 1 - sqr(cosTheta);
         }
+        float cosAlpha = sin2Theta / sinThetaMax +
+                         cosTheta * safe_sqrt(1 - sin2Theta / sqr(sinThetaMax));
+        float sinAlpha = safe_sqrt(1 - sqr(cosAlpha));
+        float phi = u[1] * 2 * Pi;
+        Vector w =
+            Frame(dcn).toWorld(sphericalDirection(sinAlpha, cosAlpha, phi));
+        Vector xxp = dc - w;
+        as.pdf = Inv2Pi / (xxp.lengthSquared() * oneMinusCosThetaMax);
+        as.frame = Frame(w);
+        as.position = w;
+        as.uv = toUV(w);
         return as;
     }
 

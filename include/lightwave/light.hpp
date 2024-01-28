@@ -22,6 +22,8 @@ struct DirectLightSample {
 
     float pdf;
 
+    float cosTheta_o;
+
     /// @brief Return an invalid sample, used to denote that sampling has failed.
     static DirectLightSample invalid() {
         return {
@@ -29,6 +31,7 @@ struct DirectLightSample {
             .weight = Color(),
             .distance = 0,
             .pdf = 0,
+            .cosTheta_o = 0,
         };
     }
 

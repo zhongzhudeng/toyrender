@@ -48,7 +48,8 @@ public:
             if (be.isInvalid()) [[unlikely]]
                 goto cont;
             w = ls.light->canBeIntersected()
-                    ? powerHeuristic(dls.pdf * ls.probability, be.pdf)
+                    ? powerHeuristic(dls.pdf * ls.probability,
+                                     be.pdf * dls.cosTheta_o)
                     : 1;
             light_color += w * weight * be.value * dls.weight / ls.probability;
         cont:
@@ -63,10 +64,9 @@ public:
             } else if (its.instance->emission()) {
                 auto light = its.instance->light();
                 w = light ? powerHeuristic(
-                                bs.pdf,
+                                bs.pdf * its.frame.normal.dot(its.wo),
                                 m_scene->lightSelectionProbability(light) *
-                                    its.pdf * sqr(its.t) /
-                                    its.frame.normal.dot(its.wo))
+                                    its.pdf * sqr(its.t))
                           : 1;
                 bsdf_color = w * weight * its.evaluateEmission();
                 break;

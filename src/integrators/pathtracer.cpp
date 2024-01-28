@@ -47,11 +47,9 @@ public:
         cont:
             bs = its.sampleBsdf(rng);
             weight *= bs.weight;
-            auto r = Ray(its.position, bs.wi);
-            its = m_scene->intersect(r, rng);
+            its = m_scene->intersect(Ray(its.position, bs.wi), rng);
             if (not its) {
-                bsdf_color =
-                    weight * m_scene->evaluateBackground(r.direction).value;
+                bsdf_color = weight * m_scene->evaluateBackground(bs.wi).value;
                 break;
             } else if (its.instance->emission()) {
                 auto light = its.instance->light();

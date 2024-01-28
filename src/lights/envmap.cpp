@@ -36,6 +36,7 @@ public:
             .weight = E.value / Inv4Pi,
             .distance = Infinity,
             .pdf = 1,
+            .cosTheta_o = 1,
         };
     }
 

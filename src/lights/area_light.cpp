@@ -15,20 +15,26 @@ public:
     DirectLightSample sampleDirect(const Point &origin,
                                    Sampler &rng) const override {
         const auto sa = m_instance->sampleArea(origin, rng);
-        const auto xxp = sa.position - origin;
-        const auto wi_l = sa.frame.toLocal(-xxp).normalized();
-        const auto emission =
-            m_instance.get()->emission()->evaluate(sa.uv, wi_l);
+        auto xxp = Vector(sa.position - origin);
+        auto wi = xxp.normalized();
+        auto wo = sa.frame.toLocal(-wi);
+        auto cosTheta_o = Frame::cosTheta(wo);
+        if (cosTheta_o <= 0) [[unlikely]]
+            return DirectLightSample::invalid();
+
+        auto len2 = xxp.lengthSquared();
+        auto len = xxp.length();
+
+        const auto emission = m_instance.get()->emission()->evaluate(sa.uv, wo);
         if (emission.isInvalid())
             return DirectLightSample::invalid();
-        const auto cosTheta_o = Frame::cosTheta(wi_l);
 
         return {
-            .wi = xxp.normalized(),
-            .weight =
-                emission.value * cosTheta_o / (xxp.lengthSquared() * sa.pdf),
-            .distance = xxp.length(),
-            .pdf = sa.pdf * xxp.lengthSquared() / cosTheta_o,
+            .wi = wi,
+            .weight = emission.value / (sa.pdf * len2),
+            .distance = len,
+            .pdf = sa.pdf * len2,
+            .cosTheta_o = cosTheta_o,
         };
     }
 

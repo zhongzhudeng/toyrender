@@ -18,6 +18,7 @@ public:
             .weight = m_intensity,
             .distance = Infinity,
             .pdf = 0,
+            .cosTheta_o = 0,
         };
     }
 
