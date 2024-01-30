@@ -81,6 +81,8 @@ public:
      */
     virtual BsdfSample sample(const Point2 &uv, const Vector &wo,
                               Sampler &rng) const = 0;
+
+    virtual Color albedo(const Point2 &uv, const Vector &wo) const = 0;
 };
 
 } // namespace lightwave

@@ -4,21 +4,20 @@
 
 C. Shading Normals
 F. Halton Sampler
+H. Image Denoising
 I. Rough Dielectric
-L.1 Basic Area Light Sampling
+L. Area Light Sampling
 N.1 Thinlens camera
+O. MIS Path Tracer
 
 ## Features
 
 G. Post Processing
-H. Image Denoising
 J. Motion Blur
 K. Improved Environment Sampling
-L.2 Improved Area Light Sampling
 M. Iridescence
 N.2 Custom bokeh shapes
 N.3 A real lens model
-O. MIS Path Tracer
 P. Hair/Fur Rendering
 Q. Light Tracer
 R. Primary-Sample Space Metropolis

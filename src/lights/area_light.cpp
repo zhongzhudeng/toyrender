@@ -3,18 +3,19 @@
 namespace lightwave {
 class AreaLight final : public Light {
     const ref<Instance> m_instance;
-    const bool m_intersectable;
 
 public:
     AreaLight(const Properties &properties)
-        : m_instance(properties.getChild<Instance>()),
-          m_intersectable(properties.get<bool>("intersectable", true)) {
+        : m_instance(properties.getChild<Instance>()) {
         m_instance->setLight(this);
     }
 
     DirectLightSample sampleDirect(const Point &origin,
                                    Sampler &rng) const override {
         const auto sa = m_instance->sampleArea(origin, rng);
+        if (sa.isInvalid())
+            return DirectLightSample::invalid();
+
         auto xxp = Vector(sa.position - origin);
         auto wi = xxp.normalized();
         auto wo = sa.frame.toLocal(-wi);
@@ -38,7 +39,7 @@ public:
         };
     }
 
-    bool canBeIntersected() const override { return m_intersectable; }
+    bool canBeIntersected() const override { return true; }
 
     std::string toString() const override {
         return tfm::format(

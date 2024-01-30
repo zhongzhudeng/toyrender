@@ -25,6 +25,8 @@ struct AreaSample : public SurfaceEvent {
         result.pdf = 0;
         return result;
     }
+
+    bool isInvalid() const { return pdf == 0; }
 };
 
 /// @brief A shape represents a geometrical object that can be intersected by rays.

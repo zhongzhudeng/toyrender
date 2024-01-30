@@ -119,16 +119,20 @@
     </instance>
 </scene>
 
-
 <integrator type="pathtracer" depth="6">
+    <image id="terminator_bunny_bsdf" />
+    <ref id="scene" />
+    <sampler type="independent" count="256" />
+</integrator>
+
+<integrator type="neepathtracer" depth="6">
     <image id="terminator_bunny_nee" />
     <ref id="scene" />
     <sampler type="independent" count="256" />
 </integrator>
 
-
-<integrator type="pathtracer" depth="6" mis="true">
+<!-- <integrator type="mispathtracer" depth="2">
     <image id="terminator_bunny_mis" />
     <ref id="scene" />
     <sampler type="independent" count="256" />
-</integrator>
+</integrator> -->

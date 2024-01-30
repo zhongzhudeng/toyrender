@@ -162,9 +162,12 @@ BsdfSample Intersection::sampleBsdf(Sampler &rng) const {
 }
 
 BsdfEval Intersection::evaluateBsdf(const Vector &wi) const {
-    if (!instance->bsdf())
+    if (!instance->bsdf()) [[unlikely]]
         return BsdfEval::invalid();
     return instance->bsdf()->evaluate(uv, frame.toLocal(wo), frame.toLocal(wi));
 }
 
+Color Intersection::evaluateAlbedo() const {
+    return instance->bsdf()->albedo(uv, frame.toLocal(wo));
+}
 }

@@ -34,8 +34,11 @@ struct MetallicLobe {
         auto D = microfacet::evaluateGGX(alpha, wm);
         auto G1_wi = microfacet::smithG1(alpha, wm, wi),
              G1_wo = microfacet::smithG1(alpha, wm, wo);
-        return {.value = color * D * G1_wi * G1_wo / (4 * Frame::cosTheta(wo)),
-                .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo)};
+        return {
+            .value = color * D * G1_wi * G1_wo / (4 * Frame::cosTheta(wo)),
+            .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo) *
+                   microfacet::detReflection(wm, wo),
+        };
     }
 
     BsdfSample sample(const Vector &wo, Sampler &rng) const {
@@ -45,7 +48,8 @@ struct MetallicLobe {
         return {
             .wi = wi,
             .weight = color * G1_wi,
-            .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo),
+            .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo) *
+                   microfacet::detReflection(wm, wo),
         };
     }
 };
@@ -99,7 +103,7 @@ public:
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        if (Frame::cosTheta(wi) <= 0)
+        if (Frame::cosTheta(wi) <= 0) [[unlikely]]
             return BsdfEval::invalid();
         const auto combination = combine(uv, wo);
         const auto diffuse = combination.diffuse.evaluate(wo, wi);
@@ -113,19 +117,28 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
+        if (Frame::cosTheta(wo) <= 0) [[unlikely]]
+            return BsdfSample::invalid();
         const auto combination = combine(uv, wo);
         BsdfSample bsdf;
         if (rng.next() < combination.diffuseSelectionProb) {
             bsdf = combination.diffuse.sample(wo, rng);
             bsdf.weight /= combination.diffuseSelectionProb;
-            bsdf.pdf *= combination.diffuseSelectionProb;
+            bsdf.pdf /= combination.diffuseSelectionProb;
         } else {
             bsdf = combination.metallic.sample(wo, rng);
             bsdf.weight /= (1 - combination.diffuseSelectionProb);
-            bsdf.pdf *= (1 - combination.diffuseSelectionProb);
+            bsdf.pdf /= (1 - combination.diffuseSelectionProb);
         }
 
         return bsdf;
+    }
+
+    Color albedo(const Point2 &uv, const Vector &wo) const override {
+        if (Frame::cosTheta(wo) <= 0) [[unlikely]]
+            return Color::black();
+        const auto combination = combine(uv, wo);
+        return combination.diffuse.color + combination.metallic.color;
     }
 
     std::string toString() const override {

@@ -41,11 +41,13 @@ public:
                     Ray(its.position, dls.wi), dls.distance, rng))
                 goto cont;
             be = its.evaluateBsdf(dls.wi);
-            if (be.isInvalid())
+            if (be.isInvalid()) [[unlikely]]
                 goto cont;
             light_color += weight * be.value * dls.weight / ls.probability;
         cont:
             bs = its.sampleBsdf(rng);
+            if (bs.isInvalid()) [[unlikely]]
+                break;
             weight *= bs.weight;
             its = m_scene->intersect(Ray(its.position, bs.wi), rng);
             if (not its) {
@@ -53,7 +55,7 @@ public:
                 break;
             } else if (its.instance->emission()) {
                 auto light = its.instance->light();
-                if (not light)
+                if (not light || light->canBeIntersected())
                     bsdf_color = weight * its.evaluateEmission();
                 break;
             }

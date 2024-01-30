@@ -63,11 +63,14 @@ public:
                 break;
             } else if (its.instance->emission()) {
                 auto light = its.instance->light();
-                w = light ? powerHeuristic(
-                                bs.pdf * its.frame.normal.dot(its.wo),
-                                m_scene->lightSelectionProbability(light) *
-                                    its.pdf * sqr(its.t))
-                          : 1;
+                if (light) {
+                    auto cosTheta_o = its.frame.normal.dot(its.wo);
+                    auto pl = m_scene->lightSelectionProbability(light) *
+                              its.pdf * sqr(its.t);
+                    w = powerHeuristic(bs.pdf * cosTheta_o, pl);
+                } else {
+                    w = 1;
+                }
                 bsdf_color = w * weight * its.evaluateEmission();
                 break;
             }

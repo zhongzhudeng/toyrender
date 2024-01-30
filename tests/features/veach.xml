@@ -156,67 +156,20 @@
 </scene>
 
 <test type="image" id="veach-bsdf" me="5e-4">
-	<integrator type="bsdfpathtracer" depth="5">
+	<integrator type="pathtracer" depth="5">
 		<ref id="scene" />
 		<sampler type="independent" count="64" />
 	</integrator>
 </test>
 
-<test type="image" id="veach-nee" mae="3e-1">
+<test type="image" id="veach-nee" me="1e-2" mae="3e-1">
 	<integrator type="neepathtracer" depth="5">
-		<scene>
-			<ref id="camera" />
-			<instance id="light_small_nee">
-				<shape type="sphere" />
-				<emission type="lambertian">
-					<texture name="emission" type="constant" value="40,25,20" />
-				</emission>
-				<transform>
-					<scale value="0.05" />
-					<translate x="-0.15" y="6.5" z="2.8" />
-				</transform>
-			</instance>
-			<light type="area" intersectable="false">
-				<ref id="light_small_nee" />
-			</light>
-			<instance id="light_medium_nee">
-				<shape type="sphere" />
-				<emission type="lambertian">
-					<texture name="emission" type="constant" value="2.5,7.5,12.5" />
-				</emission>
-				<transform>
-					<scale value="0.5" />
-					<translate x="-0.15" y="6.5" z="0.8" />
-				</transform>
-			</instance>
-			<light type="area" intersectable="false">
-				<ref id="light_medium_nee" />
-			</light>
-			<instance id="light_big_nee">
-				<shape type="sphere" />
-				<emission type="lambertian">
-					<texture name="emission" type="constant" value="6,1,4" />
-				</emission>
-				<transform>
-					<scale value="1" />
-					<translate x="-0.15" y="6.5" z="-2" />
-				</transform>
-			</instance>
-			<light type="area" intersectable="false">
-				<ref id="light_big_nee" />
-			</light>
-			<ref id="rectangle1" />
-			<ref id="rectangle2" />
-			<ref id="rectangle3" />
-			<ref id="rectangle4" />
-			<ref id="rectangle5" />
-			<ref id="rectangle6" />
-		</scene>
+		<ref id="scene" />
 		<sampler type="independent" count="64" />
 	</integrator>
 </test>
 
-<test type="image" id="veach-mis">
+<test type="image" id="veach-mis" me="1e-3">
 	<integrator type="mispathtracer" depth="5">
 		<ref id="scene" />
 		<sampler type="independent" count="64" />

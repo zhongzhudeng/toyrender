@@ -1,11 +1,9 @@
 #include <lightwave.hpp>
 namespace lightwave {
 class Sphere final : public Shape {
-    const bool m_improved_sample;
 
 public:
-    Sphere(const Properties &properties)
-        : m_improved_sample(properties.get<bool>("improvedsample", false)) {}
+    Sphere(const Properties &properties) {}
 
     bool intersect(const Ray &ray, Intersection &its,
                    Sampler &rng) const override {
@@ -19,7 +17,7 @@ public:
         float b = 2 * dc.dot(ray.direction);
 
         float delta = sqr(b) - 4 * dc_len2 + 4;
-        if (delta <= Epsilon) [[unlikely]]
+        if (safe_sqrt(delta) <= Epsilon) [[unlikely]]
             return false;
 
         float t = (-b - std::sqrt(delta)) / 2;
@@ -36,7 +34,6 @@ public:
         its.frame = Frame(w);
         its.uv = toUV(w);
 
-        Vector xxp = dc - w;
         float sinThetaMax = 1.f / dc_len;
         float sin2ThetaMax = sqr(sinThetaMax);
         float oneMinusCosThetaMax;
@@ -46,7 +43,7 @@ public:
             float cosThetaMax = safe_sqrt(1 - sin2ThetaMax);
             oneMinusCosThetaMax = 1 - cosThetaMax;
         }
-        its.pdf = Inv2Pi / (xxp.lengthSquared() * oneMinusCosThetaMax);
+        its.pdf = Inv2Pi / ((dc - w).lengthSquared() * oneMinusCosThetaMax);
 
         return true;
     }

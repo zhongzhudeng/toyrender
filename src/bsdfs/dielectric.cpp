@@ -40,6 +40,9 @@ public:
                     .pdf = 0};
     }
 
+    Color albedo(const Point2 &uv,
+                 const Vector &wo) const override{NOT_IMPLEMENTED}
+
     std::string toString() const override {
         return tfm::format(
             "Dielectric[\n"

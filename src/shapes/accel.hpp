@@ -72,7 +72,7 @@ class AccelerationStructure : public Shape {
     };
 
     struct Bin {
-        Bounds bound=Bounds::empty();
+        Bounds bound = Bounds::empty();
         size_t count = 0;
     };
 
@@ -193,23 +193,10 @@ class AccelerationStructure : public Shape {
         static constexpr size_t BINS = 16;
         float b_min, b_max, cost, best_cost = Infinity, split_pos;
 
-        Bounds cent_b=Bounds::empty();
+        Bounds cent_b = Bounds::empty();
         for (NodeIndex i = 0; i < node.primitiveCount; i++)
             cent_b.extend(centroids[node.leftFirst + i]);
 
-        // might be better if we don't split along longest axis of aabb
-        int best_i;
-        float aabb_cent, best_aabb_cent = Infinity;
-        for (int i = 0; i < 3; i++) {
-            aabb_cent = (node.aabb.max()[i] - node.aabb.min()[i]) /
-                        (cent_b.max()[i] - cent_b.min()[i]);
-            if (best_aabb_cent > aabb_cent ) {
-                best_i = i;
-                best_aabb_cent = aabb_cent;
-            }
-        }
-        
-        splitAxis = best_i;
         b_min = cent_b.min()[splitAxis], b_max = cent_b.max()[splitAxis];
 
         Bin bin[BINS];
@@ -294,7 +281,7 @@ class AccelerationStructure : public Shape {
                                                  // as split pos
 
             // partition algorithm (you might remember this from quicksort)
-            firstRightIndex         = firstPrimitive;
+            firstRightIndex = firstPrimitive;
             NodeIndex lastLeftIndex = parent.lastPrimitiveIndex();
             while (firstRightIndex <= lastLeftIndex) {
                 if (getCentroid(
@@ -318,18 +305,18 @@ class AccelerationStructure : public Shape {
         }
 
         // the two children will always be contiguous in our m_nodes list
-        const NodeIndex leftChildIndex  = (NodeIndex) (m_nodes.size() + 0);
-        const NodeIndex rightChildIndex = (NodeIndex) (m_nodes.size() + 1);
+        const NodeIndex leftChildIndex = (NodeIndex)(m_nodes.size() + 0);
+        const NodeIndex rightChildIndex = (NodeIndex)(m_nodes.size() + 1);
         parent.primitiveCount = 0; // mark the parent node as internal node
-        parent.leftFirst      = leftChildIndex;
+        parent.leftFirst = leftChildIndex;
 
         // `parent' breaks
         m_nodes.emplace_back();
-        m_nodes[leftChildIndex].leftFirst      = firstPrimitive;
+        m_nodes[leftChildIndex].leftFirst = firstPrimitive;
         m_nodes[leftChildIndex].primitiveCount = leftCount;
 
         m_nodes.emplace_back();
-        m_nodes[rightChildIndex].leftFirst      = firstRightIndex;
+        m_nodes[rightChildIndex].leftFirst = firstRightIndex;
         m_nodes[rightChildIndex].primitiveCount = rightCount;
 
         // first, process the left child node (and all of its children)
@@ -362,8 +349,8 @@ protected:
         std::iota(m_primitiveIndices.begin(), m_primitiveIndices.end(), 0);
 
         // create root node
-        auto &root          = m_nodes.emplace_back();
-        root.leftFirst      = 0;
+        auto &root = m_nodes.emplace_back();
+        root.leftFirst = 0;
         root.primitiveCount = numberOfPrimitives();
 
         // precompute bounding boxes
@@ -379,8 +366,10 @@ protected:
         centroids.clear();
         aabbs.clear();
 
-        logger(EInfo, "built BVH with %ld nodes for %ld primitives in %.1f ms",
-               m_nodes.size(), numberOfPrimitives(),
+        logger(EInfo,
+               "built BVH with %ld nodes for %ld primitives in %.1f ms",
+               m_nodes.size(),
+               numberOfPrimitives(),
                buildTimer.getElapsedTime() * 1000);
     }
 

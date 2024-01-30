@@ -11,6 +11,20 @@
             <translate z="-5" />
         </transform>
     </camera>
+    <instance id="white">
+        <shape type="rectangle" />
+        <emission type="lambertian">
+            <texture name="emission" type="constant" value="20" />
+        </emission>
+        <transform>
+            <scale value="0.5" />
+            <rotate axis="1,0,0" angle="-90" />
+            <translate y="-2" />
+        </transform>
+    </instance>
+    <light type="area">
+        <ref id="white" />
+    </light>
     <instance id="orange">
         <shape type="sphere" />
         <emission type="lambertian">
@@ -61,85 +75,26 @@
     </instance>
 </scene>
 
-<integrator type="bsdfpathtracer">
+<integrator type="pathtracer" depth="6">
     <image id="area_light_bsdf" />
     <ref id="scene" />
     <sampler type="independent" count="64" />
 </integrator>
 
-<integrator type="pathtracer">
-    <image id="area_light_combined" />
-    <scene>
-        <ref id="camera" />
-        <instance>
-            <shape type="sphere" />
-            <emission type="lambertian">
-                <texture name="emission" type="constant" value="2,0.5,0.1" />
-            </emission>
-            <transform>
-                <scale value="2" />
-                <translate x="2.5" y="-2" z="1" />
-            </transform>
-        </instance>
-        <instance id="blue_combined">
-            <shape type="sphere" />
-            <emission type="lambertian">
-                <texture name="emission" type="constant" value="3.2,11.2,48" />
-            </emission>
-            <transform>
-                <scale value="0.5" />
-                <translate x="-1" y="-0.5" z="1" />
-            </transform>
-        </instance>
-        <light type="area" intersectable="false">
-            <ref id="blue_combined" />
-        </light>
-
-        <ref id="bunny" />
-        <ref id="rectangle" />
-    </scene>
+<integrator type="neepathtracer" depth="6">
+    <image id="area_light_nee" />
+    <ref id="scene" />
     <sampler type="independent" count="64" />
-</integrator> 
+</integrator>
 
-<integrator type="mispathtracer">
+<integrator type="mispathtracer" depth="6">
     <image id="area_light_mis" />
     <ref id="scene" />
     <sampler type="independent" count="64" />
-</integrator> 
+</integrator>
 
-<integrator type="neepathtracer">
-    <image id="area_light_improved_area_sample" />
-    <scene>
-        <ref id="camera" />
-        <instance id="orange_improved_sample">
-            <shape type="sphere" />
-            <emission type="lambertian">
-                <texture name="emission" type="constant" value="2,0.5,0.1" />
-            </emission>
-            <transform>
-                <scale value="2" />
-                <translate x="2.5" y="-2" z="1" />
-            </transform>
-        </instance>
-        <light type="area" intersectable="false">
-            <ref id="orange_improved_sample" />
-        </light>
-        <instance id="blue_improved_sample">
-            <shape type="sphere"/>
-            <emission type="lambertian">
-                <texture name="emission" type="constant" value="3.2,11.2,48" />
-            </emission>
-            <transform>
-                <scale value="0.5" />
-                <translate x="-1" y="-0.5" z="1" />
-            </transform>
-        </instance>
-        <light type="area" intersectable="false">
-            <ref id="blue_improved_sample" />
-        </light>
-
-        <ref id="bunny" />
-        <ref id="rectangle" />
-    </scene>
-    <sampler type="independent" count="64" />
+<integrator type="mispathtracer" depth="6">
+    <image id="area_light_mis_halton" />
+    <ref id="scene" />
+    <sampler type="halton" count="64" />
 </integrator>
