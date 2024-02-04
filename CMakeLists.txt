@@ -106,4 +106,4 @@ endif()
 
 add_extra_options(${MY_TARGET_NAME})
 
-# add_subdirectory(blender_exporter)
+add_subdirectory(blender_exporter)
