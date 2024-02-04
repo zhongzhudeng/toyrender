@@ -1,4 +1,7 @@
-#include <lightwave.hpp>
+#include "lightwave/instance.hpp"
+#include "lightwave/integrator.hpp"
+#include "lightwave/light.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 
@@ -31,6 +34,7 @@ public:
                 goto cont;
             ls = m_scene->sampleLight(rng);
             dls = ls.light->sampleDirect(its.position, rng);
+            // assert(dls.weight.r() <= 2.f);
             if (dls.isInvalid()) [[unlikely]]
                 goto cont;
             if (m_scene->intersect(

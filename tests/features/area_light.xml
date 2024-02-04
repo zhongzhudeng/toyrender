@@ -75,26 +75,20 @@
     </instance>
 </scene>
 
-<integrator type="pathtracer" depth="6">
-    <image id="area_light_bsdf" />
+<integrator type="pathtracer" depth="2">
+    <image id="roughconductor_bsdf" />
     <ref id="scene" />
     <sampler type="independent" count="64" />
 </integrator>
 
-<integrator type="neepathtracer" depth="6">
-    <image id="area_light_nee" />
+<integrator type="neepathtracer" depth="2">
+    <image id="roughconductor_nee" />
     <ref id="scene" />
     <sampler type="independent" count="64" />
 </integrator>
 
-<integrator type="mispathtracer" depth="6">
-    <image id="area_light_mis" />
+<integrator type="mispathtracer" depth="2">
+    <image id="roughconductor_mis" />
     <ref id="scene" />
     <sampler type="independent" count="64" />
-</integrator>
-
-<integrator type="mispathtracer" depth="6">
-    <image id="area_light_mis_halton" />
-    <ref id="scene" />
-    <sampler type="halton" count="64" />
 </integrator>

@@ -1,6 +1,11 @@
+#include "lightwave/bsdf.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+#include "lightwave/texture.hpp"
+
 #include "fresnel.hpp"
 #include "microfacet.hpp"
-#include <lightwave.hpp>
 
 namespace lightwave {
 
@@ -22,6 +27,7 @@ public:
         const auto cosTheta_o = Frame::cosTheta(wo),
                    cosTheta_i = Frame::cosTheta(wi);
         if (std::abs(cosTheta_i) < Epsilon || std::abs(cosTheta_o) < Epsilon)
+            [[unlikely]]
             return BsdfEval::invalid();
 
         const auto eta =
@@ -29,12 +35,7 @@ public:
         const bool reflect = cosTheta_i * cosTheta_o > 0;
         const auto etap = reflect ? 1 : eta;
         Vector wm = wi * etap + wo;
-        // if (wm.length() < Epsilon)
-        //     return BsdfEval::invalid();
         wm = std::copysign(1.f, Frame::cosTheta(wm)) * wm.normalized();
-
-        if (wm.dot(wi) * cosTheta_i < 0 || wm.dot(wo) * cosTheta_o < 0)
-            return BsdfEval::invalid();
 
         const auto f = fresnelDielectric(wo.dot(wm), eta);
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
@@ -45,7 +46,8 @@ public:
             const auto R = m_reflectance->evaluate(uv);
             return {
                 .value = R * f * G * D * microfacet::detReflection(wm, wo),
-                .pdf = 0,
+                .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo) *
+                       microfacet::detReflection(wm, wo),
             };
         } else {
             const auto T = m_transmittance->evaluate(uv);
@@ -53,7 +55,8 @@ public:
                 .value = T * (1 - f) * G * D *
                          microfacet::detRefraction(wm, wi, wo, eta) /
                          std::abs(cosTheta_o),
-                .pdf = 0,
+                .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo) *
+                       microfacet::detRefraction(wm, wi, wo, eta),
             };
         }
     }
@@ -67,23 +70,33 @@ public:
         const auto f = fresnelDielectric(wo.dot(wm), eta);
         Vector wi;
         Color w;
+        float pdf;
 
-        if (rng.next() <= f)
-            wi = reflect(wo, wm), w = m_reflectance->evaluate(uv);
-        else
-            wi = refract(wo, wm, eta),
+        if (rng.next() <= f) {
+            wi = reflect(wo, wm);
+            w = m_reflectance->evaluate(uv);
+            pdf = microfacet::detReflection(wm, wo);
+        } else {
+            wi = refract(wo, wm, eta);
             w = m_transmittance->evaluate(uv) / sqr(eta);
+            pdf = microfacet::detRefraction(wm, wi, wo, eta);
+        }
 
         const auto G1_wi = microfacet::smithG1(alpha, wm, wi);
         return {
             .wi = wi,
             .weight = w * G1_wi * Frame::absCosTheta(wi),
-            .pdf = 0,
+            .pdf = microfacet::pdfGGXVNDF(alpha, wm, wo) * pdf,
         };
     }
 
-    Color albedo(const Point2 &uv,
-                 const Vector &wo) const override{NOT_IMPLEMENTED}
+    Color albedo(const Point2 &uv, const Vector &wo) const override {
+        const float eta = Frame::cosTheta(wo) > 0 ? m_ior->scalar(uv)
+                                                  : 1.f / m_ior->scalar(uv);
+        const auto f = fresnelDielectric(Frame::absCosTheta(wo), eta);
+        return f * m_reflectance->evaluate(uv) +
+               (1 - f) * m_transmittance->evaluate(uv) / sqr(eta);
+    }
 
     std::string toString() const override {
         return tfm::format(

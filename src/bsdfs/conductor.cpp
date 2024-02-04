@@ -1,4 +1,7 @@
-#include <lightwave.hpp>
+#include "lightwave/bsdf.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/texture.hpp"
 
 namespace lightwave {
 

@@ -1,5 +1,9 @@
 #include "fresnel.hpp"
-#include <lightwave.hpp>
+#include "lightwave/bsdf.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+#include "lightwave/texture.hpp"
 
 namespace lightwave {
 
@@ -31,17 +35,26 @@ public:
 
         const auto f = fresnelDielectric(Frame::absCosTheta(wo), eta);
         if (rng.next() <= f)
-            return {.wi = reflect(wo, sgn * n),
-                    .weight = m_reflectance->evaluate(uv),
-                    .pdf = 0};
+            return {
+                .wi = reflect(wo, sgn * n),
+                .weight = m_reflectance->evaluate(uv),
+                .pdf = 0,
+            };
         else
-            return {.wi = refract(wo, sgn * n, eta),
-                    .weight = m_transmittance->evaluate(uv) / sqr(eta),
-                    .pdf = 0};
+            return {
+                .wi = refract(wo, sgn * n, eta),
+                .weight = m_transmittance->evaluate(uv) / sqr(eta),
+                .pdf = 0,
+            };
     }
 
-    Color albedo(const Point2 &uv,
-                 const Vector &wo) const override{NOT_IMPLEMENTED}
+    Color albedo(const Point2 &uv, const Vector &wo) const override {
+        const float eta = Frame::cosTheta(wo) > 0 ? m_ior->scalar(uv)
+                                                  : 1.f / m_ior->scalar(uv);
+        const auto f = fresnelDielectric(Frame::absCosTheta(wo), eta);
+        return f * m_reflectance->evaluate(uv) +
+               (1 - f) * m_transmittance->evaluate(uv) / sqr(eta);
+    }
 
     std::string toString() const override {
         return tfm::format(

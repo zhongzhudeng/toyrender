@@ -1,5 +1,9 @@
 #include <OpenImageDenoise/oidn.hpp>
-#include <lightwave.hpp>
+
+#include "lightwave/image.hpp"
+#include "lightwave/postprocess.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/streaming.hpp"
 
 namespace lightwave {
 class Denoising final : public Postprocess {

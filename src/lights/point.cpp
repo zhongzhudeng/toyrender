@@ -1,4 +1,6 @@
-#include <lightwave.hpp>
+#include "lightwave/light.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 

@@ -1,4 +1,7 @@
-#include <lightwave.hpp>
+#include "lightwave/instance.hpp"
+#include "lightwave/integrator.hpp"
+#include "lightwave/light.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 
@@ -8,7 +11,10 @@ class MISPathTracerIntegrator final : public SamplingIntegrator {
 
     float balanceHeuristic(float f, float g) { return f / (f + g); }
     float powerHeuristic(float f, float g) {
-        return sqr(f) / (sqr(f) + sqr(g));
+        if (std::isfinite(sqr(f))) [[likely]]
+            return sqr(f) / (sqr(f) + sqr(g));
+        else
+            return 1;
     }
 
 public:
@@ -26,6 +32,7 @@ public:
         DirectLightSample dls;
         BsdfEval be;
         BsdfSample bs;
+        BackgroundLightEval ble;
         float w;
 
         its = m_scene->intersect(ray, rng);
@@ -54,12 +61,15 @@ public:
             light_color += w * weight * be.value * dls.weight / ls.probability;
         cont:
             bs = its.sampleBsdf(rng);
+            if (bs.isInvalid()) [[unlikely]]
+                break;
             weight *= bs.weight;
             auto r = Ray(its.position, bs.wi);
             its = m_scene->intersect(r, rng);
             if (not its) {
-                bsdf_color =
-                    weight * m_scene->evaluateBackground(r.direction).value;
+                ble = m_scene->evaluateBackground(r.direction);
+                w = powerHeuristic(bs.pdf * ble.sinTheta, ble.pdf);
+                bsdf_color = w * weight * ble.value;
                 break;
             } else if (its.instance->emission()) {
                 auto light = its.instance->light();

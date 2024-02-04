@@ -1,7 +1,8 @@
-#include <lightwave.hpp>
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
 
-#include <functional>
 #include "pcg32.h"
+#include <functional>
 
 namespace lightwave {
 
@@ -12,19 +13,16 @@ namespace lightwave {
  * jittered sampling or blue noise sampling).
  * @see Internally, this sampler uses the PCG32 library to generate random numbers.
  */
-class Independent final: public Sampler {
+class Independent final : public Sampler {
     uint64_t m_seed;
     pcg32 m_pcg;
 
 public:
-    Independent(const Properties &properties)
-    : Sampler(properties) {
+    Independent(const Properties &properties) : Sampler(properties) {
         m_seed = properties.get<int>("seed", 1337);
     }
 
-    void seed(int sampleIndex) override {
-        m_pcg.seed(m_seed, sampleIndex);
-    }
+    void seed(int sampleIndex) override { m_pcg.seed(m_seed, sampleIndex); }
 
     void seed(const Point2i &pixel, int sampleIndex) override {
         const uint64_t a = (uint64_t(pixel.x()) << 32) ^ pixel.y();
@@ -32,9 +30,7 @@ public:
         m_pcg.seed(m_pcg.nextUInt(), sampleIndex);
     }
 
-    float next() override {
-        return m_pcg.nextFloat();
-    }
+    float next() override { return m_pcg.nextFloat(); }
 
     ref<Sampler> clone() const override {
         return std::make_shared<Independent>(*this);
@@ -45,8 +41,7 @@ public:
             "Independent[\n"
             "  count = %d\n"
             "]",
-            m_samplesPerPixel
-        );
+            m_samplesPerPixel);
     }
 };
 

@@ -64,11 +64,13 @@ struct BackgroundLightEval {
     Color value;
 
     float pdf;
+    float sinTheta;
 
     static BackgroundLightEval invalid() {
         return {
             .value = Color(0),
             .pdf = 0,
+            .sinTheta = 0,
         };
     }
 
@@ -88,12 +90,6 @@ public:
      * @param direction The direction in world coordinates, pointing away from the scene.
      */
     virtual BackgroundLightEval evaluate(const Vector &direction) const = 0;
-
-    DirectLightSample sampleDirect(const Point &origin,
-                                   Sampler &rng) const override {
-        return DirectLightSample::invalid();
-    }
-
     bool canBeIntersected() const override { return true; }
 };
 

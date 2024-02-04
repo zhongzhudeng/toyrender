@@ -32,7 +32,7 @@ inline Point2 squareToUniformDiskConcentric(const Point2 &sample) {
 
     float cosPhi = std::cos(phi);
     float sinPhi = std::sin(phi);
-    return { r * cosPhi, r * sinPhi };
+    return {r * cosPhi, r * sinPhi};
 }
 
 /**
@@ -45,7 +45,7 @@ inline Vector squareToUniformSphere(const Point2 &sample) {
     float phi = 2 * Pi * sample.x();
     float cosPhi = std::cos(phi);
     float sinPhi = std::sin(phi);
-    return { r * cosPhi, r * sinPhi, z };
+    return {r * cosPhi, r * sinPhi, z};
 }
 
 /**
@@ -56,13 +56,11 @@ inline Vector squareToUniformHemisphere(const Point2 &sample) {
     Point2 p = squareToUniformDiskConcentric(sample);
     float z = 1.0f - p.x() * p.x() - p.y() * p.y();
     float s = sqrt(z + 1.0f);
-    return { s * p.x(), s * p.y(), z };
+    return {s * p.x(), s * p.y(), z};
 }
 
 /// @brief Returns the density of the @ref squareToUniformHemisphere warping.
-inline float uniformHemispherePdf() {
-    return Inv2Pi;
-}
+inline float uniformHemispherePdf() { return Inv2Pi; }
 
 /**
  * @brief Warps a given point from the unit square ([0,0] to [1,1]) to a unit hemisphere (centered around [0,0,0] with radius 1,
@@ -71,7 +69,7 @@ inline float uniformHemispherePdf() {
 inline Vector squareToCosineHemisphere(const Point2 &sample) {
     Point2 p = squareToUniformDiskConcentric(sample);
     float z = safe_sqrt(1.0f - p.x() * p.x() - p.y() * p.y());
-    return { p.x(), p.y(), z };
+    return {p.x(), p.y(), z};
 }
 
 /// @brief Returns the density of the @ref squareToCosineHemisphere warping.
@@ -83,7 +81,5 @@ inline Point2 squareToUniformTriangle(const Point2 &sample) {
     float su0 = std::sqrt(sample.x());
     return Point2(1 - su0, sample.y() * su0);
 }
-
-
 
 }

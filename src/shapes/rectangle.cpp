@@ -1,4 +1,7 @@
-#include <lightwave.hpp>
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+#include "lightwave/shape.hpp"
 
 namespace lightwave {
 
@@ -10,7 +13,7 @@ struct SphQuad {
 
     SphQuad(const Point &origin) {
         o = origin;
-        p0 = Point{-1 - o.x(), -1 - o.y(), -o.z()};
+        p0 = Point{-1 - o.x(), -1 - o.y(), std::abs(o.z())};
         x1 = p0.x() + 2;
         y1 = p0.y() + 2;
         Vector v00 = Vector(p0);
@@ -19,9 +22,9 @@ struct SphQuad {
         Vector v11 = {x1, y1, p0.z()};
 
         Vector n0 = v00.cross(v10).normalized();
-        Vector n1 = v10.cross(v11).normalized();
+        Vector n1 = v01.cross(v00).normalized();
         Vector n2 = v11.cross(v01).normalized();
-        Vector n3 = v01.cross(v00).normalized();
+        Vector n3 = v10.cross(v11).normalized();
 
         float g0 = std::acos(-n0.dot(n1));
         float g1 = std::acos(-n1.dot(n2));
@@ -41,12 +44,12 @@ struct SphQuad {
         cu = std::clamp(cu, -1.f, 1.f);
         float xu = -(cu * p0.z()) / sqrt(1 - sqr(cu));
         xu = std::clamp(xu, p0.x(), x1);
-        float d = sqrt(sqr(xu) + sqr(p0.z()));
-        float h0 = p0.y() / sqrt(sqr(d) + sqr(p0.y()));
-        float h1 = y1 / sqrt(sqr(d) + sqr(y1));
+        float d2 = sqr(xu) + sqr(p0.z());
+        float h0 = p0.y() / sqrt(d2 + sqr(p0.y()));
+        float h1 = y1 / sqrt(d2 + sqr(y1));
         float hv = h0 + uv.y() * (h1 - h0);
         float hv2 = sqr(hv);
-        float yv = (hv2 < 1 - Epsilon) ? (hv * d) / sqrt(1 - hv2) : y1;
+        float yv = (hv2 < 1 - Epsilon) ? (hv * sqrt(d2)) / sqrt(1 - hv2) : y1;
         return {o.x() + xu, o.y() + yv, 0};
     }
 
@@ -70,7 +73,7 @@ public:
                    Sampler &rng) const override {
         // if the ray travels in the xy-plane, we report no intersection
         // (we ignore the edge case - pun intended - that the ray might have infinite intersections with the rectangle)
-        if (ray.direction.z() == 0) [[unlikely]]
+        if (std::abs(ray.direction.z()) < Epsilon) [[unlikely]]
             return false;
 
         // ray.origin.z + t * ray.direction.z = 0
@@ -82,6 +85,10 @@ public:
         if (t < Epsilon || t > its.t)
             return false;
 
+        SphQuad squad(ray.origin);
+        if (squad.S < Epsilon) [[unlikely]]
+            return false;
+
         // compute the hitpoint
         const Point position = ray(t);
         // we have intersected an infinite plane at z=0; now dismiss anything outside of the [-1,-1,0]..[+1,+1,0] domain.
@@ -90,7 +97,6 @@ public:
 
         // we have determined there was an intersection! we are now free to change the intersection object and return true.
         its.t = t;
-        SphQuad squad(ray.origin);
         squad.polulate(its, position);
         return true;
     }
@@ -102,9 +108,11 @@ public:
     Point getCentroid() const override { return Point(0); }
 
     AreaSample sampleArea(const Point &origin, Sampler &rng) const override {
-        if (origin.z() <= 0)
+        if (origin.z() <= Epsilon) [[unlikely]]
             return AreaSample::invalid();
         auto squad = SphQuad(origin);
+        if (squad.S < Epsilon) [[unlikely]]
+            return AreaSample::invalid();
         Point position = squad.sample(rng.next2D());
         AreaSample sample;
         squad.polulate(sample, position);

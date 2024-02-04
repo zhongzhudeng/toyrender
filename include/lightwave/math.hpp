@@ -601,32 +601,6 @@ inline Vector refract(const Vector &w, const Vector &n, float eta) {
     return (invEta * n.dot(w) - sqrt(k)) * n - invEta * w;
 }
 
-inline Point2 toUV(const Point &w) {
-    float theta = std::acos(w.y());
-    float phi;
-    if (1.f - std::abs(w.y()) > 1e-8) [[likely]]
-        phi = std::acos(w.x() / std::sqrt(sqr(w.x()) + sqr(w.z())));
-    else [[unlikely]]
-        phi = 0;
-    phi = w.z() > 0 ? -phi : phi;
-    return Point2(phi* Inv2Pi + 0.5, theta* InvPi);
-}
-
-inline Point toCartesian(const Point2 &uv) {
-    Point w;
-    w.y() = std::cos(uv.y()*Pi);
-    auto r_xz = std::sin(uv.y()*Pi);
-    w.x() = r_xz * std::cos(uv.y() * 2 * Pi - Pi);
-    w.y() = r_xz * std::sin(uv.y() * 2 * Pi - Pi);
-    return w;
-}
-
-inline Vector sphericalDirection(float sinTheta, float cosTheta, float phi) {
-    return Vector(std::clamp(sinTheta, -1.f, 1.f) * std::cos(phi),
-                  std::clamp(sinTheta, -1.f, 1.f) * std::sin(phi),
-                  std::clamp(cosTheta, -1.f, 1.f));
-}
-
 /// @brief Describes a ray that propagates through space.
 struct Ray {
     /// @brief The origin whether the ray starts (t = 0).

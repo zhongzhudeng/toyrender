@@ -1,4 +1,5 @@
-#include <lightwave.hpp>
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
 
 #include "accel.hpp"
 
@@ -13,11 +14,10 @@ class Group final : public AccelerationStructure {
     std::vector<ref<Shape>> m_children;
 
 protected:
-    int numberOfPrimitives() const override {
-        return int(m_children.size());
-    }
+    int numberOfPrimitives() const override { return int(m_children.size()); }
 
-    bool intersect(int primitiveIndex, const Ray &ray, Intersection &its, Sampler &rng) const override {
+    bool intersect(int primitiveIndex, const Ray &ray, Intersection &its,
+                   Sampler &rng) const override {
         return m_children[primitiveIndex]->intersect(ray, its, rng);
     }
 
@@ -36,7 +36,8 @@ public:
     }
 
     void markAsVisible() override {
-        for (auto &child : m_children) child->markAsVisible();
+        for (auto &child : m_children)
+            child->markAsVisible();
     }
 
     AreaSample sampleArea(const Point &origin, Sampler &rng) const override {

@@ -1,4 +1,5 @@
-#include <lightwave.hpp>
+#include "lightwave/integrator.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 
@@ -19,7 +20,7 @@ namespace lightwave {
  *   <integrator type="camera" grid="true" gridColor="0.5,0.3,0.2" gridFrequency="5" />
  * @endcode
  */
-class CameraIntegrator final: public SamplingIntegrator {
+class CameraIntegrator final : public SamplingIntegrator {
     /// @brief Whether to show the grid, or only output the ray's direction as color.
     bool m_showGrid;
     /// @brief The color of the grid, if the grid is shown.
@@ -29,7 +30,7 @@ class CameraIntegrator final: public SamplingIntegrator {
 
 public:
     CameraIntegrator(const Properties &properties)
-    : SamplingIntegrator(properties) {
+        : SamplingIntegrator(properties) {
         // to parse properties from the scene description, use properties.get(name, default_value)
         // you can also omit the default value if you want to require the user to specify a value
 
@@ -49,16 +50,22 @@ public:
 
             // (this code is intentionally obscure to not spoil other exercises ;-) )
             Point o = ray.origin;
-            if (std::fmod(abs(d.x() * (1 - o.z()) / d.z() + o.x()) * m_gridFrequency, 1.0f) < 0.1f) return m_gridColor;
-            if (std::fmod(abs(d.y() * (1 - o.z()) / d.z() + o.y()) * m_gridFrequency, 1.0f) < 0.1f) return m_gridColor;
-            
+            if (std::fmod(abs(d.x() * (1 - o.z()) / d.z() + o.x()) *
+                              m_gridFrequency,
+                          1.0f) < 0.1f)
+                return m_gridColor;
+            if (std::fmod(abs(d.y() * (1 - o.z()) / d.z() + o.y()) *
+                              m_gridFrequency,
+                          1.0f) < 0.1f)
+                return m_gridColor;
+
             // remap the direction from [-1,+1]^3 to [0,+1]^3 so that colors channels are never negative
             d = (d + Vector(1)) / 2;
         }
         return Color(d);
     }
 
-    /// @brief An optional textual representation of this class, which can be useful for debugging. 
+    /// @brief An optional textual representation of this class, which can be useful for debugging.
     std::string toString() const override {
         return tfm::format(
             "CameraIntegrator[\n"
@@ -66,8 +73,7 @@ public:
             "  image = %s,\n"
             "]",
             indent(m_sampler),
-            indent(m_image)
-        );
+            indent(m_image));
     }
 };
 

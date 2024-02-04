@@ -1,7 +1,7 @@
-#include "lightwave/color.hpp"
-#include "lightwave/core.hpp"
-#include "lightwave/math.hpp"
-#include <lightwave.hpp>
+#include "lightwave/instance.hpp"
+#include "lightwave/integrator.hpp"
+#include "lightwave/light.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 

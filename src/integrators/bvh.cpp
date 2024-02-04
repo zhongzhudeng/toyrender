@@ -1,8 +1,9 @@
-#include <lightwave.hpp>
+#include "lightwave/integrator.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 
-class BVHPerformance final: public SamplingIntegrator {
+class BVHPerformance final : public SamplingIntegrator {
     float m_unit;
 
 public:
@@ -13,16 +14,18 @@ public:
 
     Color Li(const Ray &ray, Sampler &rng) override {
         Intersection its = m_scene->intersect(ray, rng);
-        return Color(its.stats.bvhCounter / m_unit,
-                     its.stats.primCounter / m_unit, 0);
+        return Color(
+            its.stats.bvhCounter / m_unit, its.stats.primCounter / m_unit, 0);
     }
 
     std::string toString() const override {
-        return tfm::format("BVHPerformance[\n"
-                           "  sampler = %s,\n"
-                           "  image = %s,\n"
-                           "]",
-                           indent(m_sampler), indent(m_image));
+        return tfm::format(
+            "BVHPerformance[\n"
+            "  sampler = %s,\n"
+            "  image = %s,\n"
+            "]",
+            indent(m_sampler),
+            indent(m_image));
     }
 };
 

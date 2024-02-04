@@ -6,7 +6,6 @@
 #pragma once
 
 #include <lightwave/core.hpp>
-#include <lightwave/color.hpp>
 #include <lightwave/math.hpp>
 #include <lightwave/properties.hpp>
 

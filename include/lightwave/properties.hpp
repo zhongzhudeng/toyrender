@@ -40,6 +40,7 @@ template <> bool parse_string(const std::string &str);
 template <> Color parse_string(const std::string &str);
 template <> Vector2 parse_string(const std::string &str);
 template <> Vector parse_string(const std::string &str);
+template <> Point2i parse_string(const std::string &str);
 template <> Point2 parse_string(const std::string &str);
 template <> Point parse_string(const std::string &str);
 template <> Matrix4x4 parse_string(const std::string &str);

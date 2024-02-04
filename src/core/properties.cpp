@@ -87,6 +87,10 @@ template<> Vector parse_string(const std::string &str) {
     return parse_vector_string<Vector>(str);
 }
 
+template<> Point2i parse_string(const std::string &str) {
+    return parse_vector_string<Point2i>(str);
+}
+
 template<> Point2 parse_string(const std::string &str) {
     return parse_vector_string<Point2>(str);
 }

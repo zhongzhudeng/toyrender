@@ -1,6 +1,8 @@
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+
 #include "pcg32.h"
 #include "primes.h"
-#include <lightwave.hpp>
 
 namespace lightwave {
 

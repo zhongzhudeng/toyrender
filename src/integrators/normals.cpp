@@ -1,11 +1,9 @@
-#include "lightwave/color.hpp"
-#include "lightwave/core.hpp"
-#include "lightwave/math.hpp"
-#include <lightwave.hpp>
+#include "lightwave/integrator.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 
-class NormalsIntegrator final: public SamplingIntegrator {
+class NormalsIntegrator final : public SamplingIntegrator {
     bool m_remap;
     ref<Scene> m_scene;
 

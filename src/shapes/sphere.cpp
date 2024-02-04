@@ -1,5 +1,34 @@
-#include <lightwave.hpp>
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+#include "lightwave/shape.hpp"
+
 namespace lightwave {
+
+inline Vector sphericalDirection(float sinTheta, float cosTheta, float phi) {
+    return Vector(std::clamp(sinTheta, -1.f, 1.f) * std::cos(phi),
+                  std::clamp(sinTheta, -1.f, 1.f) * std::sin(phi),
+                  std::clamp(cosTheta, -1.f, 1.f));
+}
+
+inline float sphericalTheta(const Vector &w) { return safe_acos(w.y()); }
+
+inline float sphericalPhi(const Vector &w) { return std::atan2(w.x(), w.z()); }
+
+inline Point2 to_uv(const Vector &w) {
+    float u = sphericalPhi(w) * Inv2Pi + 0.5;
+    float v = sphericalTheta(w) * InvPi;
+    return Point2(u, v);
+}
+
+inline Vector to_cartisian(Point2 &uv) {
+    float theta = uv.y() * Pi;
+    float sinTheta = std::sin(theta);
+    float cosTheta = std::cos(theta);
+    float phi = uv.x() * 2 * Pi;
+    return sphericalDirection(sinTheta, cosTheta, phi);
+}
+
 class Sphere final : public Shape {
 
 public:
@@ -32,7 +61,7 @@ public:
         Vector w = Vector(ray(t)).normalized();
         its.position = w;
         its.frame = Frame(w);
-        its.uv = toUV(w);
+        its.uv = to_uv(w);
 
         float sinThetaMax = 1.f / dc_len;
         float sin2ThetaMax = sqr(sinThetaMax);
@@ -85,7 +114,7 @@ public:
         as.pdf = Inv2Pi / (xxp.lengthSquared() * oneMinusCosThetaMax);
         as.frame = Frame(w);
         as.position = w;
-        as.uv = toUV(w);
+        as.uv = to_uv(w);
         return as;
     }
 

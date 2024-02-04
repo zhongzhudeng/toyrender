@@ -1,4 +1,7 @@
-#include <lightwave.hpp>
+#include "lightwave/instance.hpp"
+#include "lightwave/integrator.hpp"
+#include "lightwave/light.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 
@@ -11,18 +14,17 @@ public:
           m_scene(properties.getChild<Scene>("scene")) {}
 
     Color Li(const Ray &ray, Sampler &rng) override {
-        Intersection its, test_its = m_scene->intersect(ray, rng);
-        if (not test_its)
+        Intersection its = m_scene->intersect(ray, rng);
+        if (not its)
             return m_scene->evaluateBackground(ray.direction).value;
-        if (test_its.instance->emission())
-            return test_its.evaluateEmission();
+        if (its.instance->emission())
+            return its.evaluateEmission();
 
-        Color bsdf_color, light_color;
+        Color bsdf_color = Color::black(), light_color = Color::black();
         LightSample ls;
         DirectLightSample dls;
-        BsdfEval eval;
-
-        its = test_its;
+        BsdfEval be;
+        BsdfSample bs;
 
         if (not m_scene->hasLights())
             goto cont;
@@ -30,23 +32,27 @@ public:
         if (ls.light->canBeIntersected())
             goto cont;
         dls = ls.light->sampleDirect(its.position, rng);
-        if (dls.isInvalid())
+        if (dls.isInvalid()) [[unlikely]]
             goto cont;
         if (m_scene->intersect(Ray(its.position, dls.wi), dls.distance, rng))
             goto cont;
-        eval = its.evaluateBsdf(dls.wi);
-        if (eval.isInvalid())
+        be = its.evaluateBsdf(dls.wi);
+        if (be.isInvalid()) [[unlikely]]
             goto cont;
-        light_color = eval.value * dls.weight / ls.probability;
+        light_color += be.value * dls.weight / ls.probability;
     cont:
-        auto bsdf = its.sampleBsdf(rng);
-        auto r = Ray(its.position, bsdf.wi);
-        test_its = m_scene->intersect(r, rng);
-        if (not test_its)
-            bsdf_color =
-                bsdf.weight * m_scene->evaluateBackground(r.direction).value;
-        else if (test_its.instance->emission())
-            bsdf_color = bsdf.weight * test_its.evaluateEmission();
+        bs = its.sampleBsdf(rng);
+        if (bs.isInvalid())
+            return light_color;
+        its = m_scene->intersect(Ray(its.position, bs.wi), rng);
+        if (not its)
+            bsdf_color += bs.weight * m_scene->evaluateBackground(bs.wi).value;
+        else if (its.instance->emission()) {
+            auto light = its.instance->light();
+            if (not light)
+                bsdf_color += bs.weight * its.evaluateEmission();
+        }
+
         return light_color + bsdf_color;
     }
 

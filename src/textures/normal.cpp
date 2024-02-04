@@ -1,8 +1,11 @@
-#include <lightwave.hpp>
+#include "lightwave/image.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/texture.hpp"
 
 namespace lightwave {
 
-class NormalTexture final: public Texture {
+class NormalTexture final : public Texture {
     enum class BorderMode {
         Clamp,
         Repeat,
@@ -112,6 +115,12 @@ public:
         u1 = lerp(colors[1], colors[3], s);
         return lerp(u0, u1, t);
     }
+
+    float scalar(const Point2 &uv) const override {
+        return evaluate(uv).luminance();
+    }
+
+    ScalarImage scalar() const override{NOT_IMPLEMENTED}
 
     std::string toString() const override {
         return tfm::format(

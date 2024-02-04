@@ -1,4 +1,9 @@
-#include <lightwave.hpp>
+#include "lightwave/bsdf.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+#include "lightwave/texture.hpp"
+#include "lightwave/warp.hpp"
 
 #include "fresnel.hpp"
 #include "microfacet.hpp"
@@ -103,8 +108,9 @@ public:
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        if (Frame::cosTheta(wi) <= 0) [[unlikely]]
+        if (Frame::cosTheta(wi) <= 0 || Frame::cosTheta(wo) <= 0) [[unlikely]]
             return BsdfEval::invalid();
+
         const auto combination = combine(uv, wo);
         const auto diffuse = combination.diffuse.evaluate(wo, wi);
         const auto metallic = combination.metallic.evaluate(wo, wi);
@@ -124,11 +130,11 @@ public:
         if (rng.next() < combination.diffuseSelectionProb) {
             bsdf = combination.diffuse.sample(wo, rng);
             bsdf.weight /= combination.diffuseSelectionProb;
-            bsdf.pdf /= combination.diffuseSelectionProb;
+            bsdf.pdf *= combination.diffuseSelectionProb;
         } else {
             bsdf = combination.metallic.sample(wo, rng);
             bsdf.weight /= (1 - combination.diffuseSelectionProb);
-            bsdf.pdf /= (1 - combination.diffuseSelectionProb);
+            bsdf.pdf *= (1 - combination.diffuseSelectionProb);
         }
 
         return bsdf;

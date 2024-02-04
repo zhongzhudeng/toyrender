@@ -5,11 +5,23 @@
 
 #pragma once
 
-#include <lightwave/core.hpp>
-#include <lightwave/math.hpp>
-#include <lightwave/color.hpp>
+#include "lightwave/core.hpp"
+#include "lightwave/math.hpp"
+
+#include <span>
 
 namespace lightwave {
+
+class ScalarImage {
+    std::vector<float> m_data;
+    Point2i m_resolution;
+
+public:
+    ScalarImage();
+    ScalarImage(std::vector<float> data, Point2i resolution);
+    Point2i resolution() const;
+    std::span<float> data();
+};
 
 /// @brief Models spatially varying material properties (e.g., images or procedural noise).
 class Texture : public Object {
@@ -25,11 +37,9 @@ public:
      * For most applications, the input point will lie in the unit square [0,1)^2, but points outside this
      * domain are also allowed.
      */
-    virtual float scalar(const Point2 &uv) const {
-        // arbitrary mapping from RGB images to scalar values (typically those will be grayscale anyway and
-        // we would ideally have a separate texture interface for scalar values)
-        return evaluate(uv).r();
-    }
+    virtual float scalar(const Point2 &uv) const = 0;
+
+    virtual ScalarImage scalar() const = 0;
 };
 
 }

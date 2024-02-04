@@ -1,4 +1,7 @@
-#include <lightwave.hpp>
+#include "lightwave/instance.hpp"
+#include "lightwave/integrator.hpp"
+#include "lightwave/light.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 
@@ -54,9 +57,7 @@ public:
                 bsdf_color = weight * m_scene->evaluateBackground(bs.wi).value;
                 break;
             } else if (its.instance->emission()) {
-                auto light = its.instance->light();
-                if (not light || light->canBeIntersected())
-                    bsdf_color = weight * its.evaluateEmission();
+                bsdf_color = weight * its.evaluateEmission();
                 break;
             }
         }

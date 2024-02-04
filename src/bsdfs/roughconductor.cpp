@@ -1,11 +1,16 @@
+#include "lightwave/bsdf.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+#include "lightwave/texture.hpp"
+
 #include "microfacet.hpp"
-#include <lightwave.hpp>
 
 namespace lightwave {
 
 class RoughConductor final : public Bsdf {
-    const ref<const Texture> m_reflectance;
-    const ref<const Texture> m_roughness;
+    const cref<Texture> m_reflectance;
+    const cref<Texture> m_roughness;
 
 public:
     RoughConductor(const Properties &properties)
@@ -14,7 +19,7 @@ public:
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        if (Frame::cosTheta(wi) <= 0) [[unlikely]]
+        if (Frame::cosTheta(wi) <= 0 || Frame::cosTheta(wo) <= 0) [[unlikely]]
             return BsdfEval::invalid();
 
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
@@ -32,6 +37,9 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
+        if (Frame::cosTheta(wo) <= 0) [[unlikely]]
+            return BsdfSample::invalid();
+
         const auto alpha = std::max(float(1e-3), sqr(m_roughness->scalar(uv)));
         auto wm = microfacet::sampleGGXVNDF(alpha, wo, rng.next2D());
         auto R = m_reflectance->evaluate(uv);
@@ -45,8 +53,9 @@ public:
         };
     }
 
-    Color albedo(const Point2 &uv,
-                 const Vector &wo) const override{NOT_IMPLEMENTED}
+    Color albedo(const Point2 &uv, const Vector &wo) const override {
+        return m_reflectance->evaluate(uv);
+    }
 
     std::string toString() const override {
         return tfm::format(

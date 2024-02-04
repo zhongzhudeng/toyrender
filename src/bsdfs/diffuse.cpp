@@ -1,4 +1,9 @@
-#include <lightwave.hpp>
+#include "lightwave/bsdf.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/sampler.hpp"
+#include "lightwave/texture.hpp"
+#include "lightwave/warp.hpp"
 
 namespace lightwave {
 
@@ -11,7 +16,7 @@ public:
 
     BsdfEval evaluate(const Point2 &uv, const Vector &wo,
                       const Vector &wi) const override {
-        if (Frame::cosTheta(wi) <= 0)
+        if (Frame::cosTheta(wi) <= 0 || Frame::cosTheta(wo) <= 0) [[unlikely]]
             return BsdfEval::invalid();
         return {
             .value = Frame::cosTheta(wi) * m_albedo->evaluate(uv) * InvPi,
@@ -21,6 +26,8 @@ public:
 
     BsdfSample sample(const Point2 &uv, const Vector &wo,
                       Sampler &rng) const override {
+        if (Frame::cosTheta(wo) <= 0) [[unlikely]]
+            return BsdfSample::invalid();
         auto wi = squareToCosineHemisphere(rng.next2D());
         return {
             .wi = wi,

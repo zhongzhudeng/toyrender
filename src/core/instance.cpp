@@ -89,6 +89,8 @@ Point Instance::getCentroid() const {
 AreaSample Instance::sampleArea(const Point &reference, Sampler &rng) const {
     const Point ref_local = m_transform->inverse(reference);
     AreaSample sample = m_shape->sampleArea(ref_local, rng);
+    if (sample.isInvalid())
+        return sample;
     transformFrame(sample);
     return sample;
 }

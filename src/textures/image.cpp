@@ -1,8 +1,11 @@
-#include <lightwave.hpp>
+#include "lightwave/image.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
+#include "lightwave/texture.hpp"
 
 namespace lightwave {
 
-class ImageTexture final: public Texture {
+class ImageTexture final : public Texture {
     enum class BorderMode {
         Clamp,
         Repeat,
@@ -91,6 +94,8 @@ public:
         pixels[2].x() = pixels[3].x();
         pixels[2].y() = pixels[3].y() - 1;
 
+        // logger(EInfo, "[texture] uv: %s, idx: %s", m_uv, pixels[3]);
+
         for (int i = 0; i < 4; i++) {
             if (m_border == BorderMode::Clamp) {
                 pixels[i].x() =
@@ -113,6 +118,25 @@ public:
         u0 = lerp(colors[0], colors[2], s);
         u1 = lerp(colors[1], colors[3], s);
         return m_exposure * lerp(u0, u1, t);
+    }
+
+    float scalar(const Point2 &uv) const override {
+        return evaluate(uv).luminance();
+    }
+
+    ScalarImage scalar() const override {
+        Point2i resolution = m_image->resolution();
+        size_t width = resolution.x(), height = resolution.y();
+        std::vector<float> data(width * height);
+        for (size_t v = 0; v < height; v++) {
+            float sinTheta = std::sin(Pi * (v + 0.5) / height);
+            for (size_t u = 0; u < width; u++) {
+                Point2 uv(float(u) / width, 1 - float(v) / height);
+                float c = sinTheta * evaluate(uv).luminance();
+                data[v * width + u] = c;
+            }
+        }
+        return ScalarImage(data, resolution);
     }
 
     std::string toString() const override {

@@ -1,4 +1,7 @@
-#include <lightwave.hpp>
+#include "lightwave/instance.hpp"
+#include "lightwave/light.hpp"
+#include "lightwave/properties.hpp"
+#include "lightwave/registry.hpp"
 
 namespace lightwave {
 class AreaLight final : public Light {
@@ -12,8 +15,8 @@ public:
 
     DirectLightSample sampleDirect(const Point &origin,
                                    Sampler &rng) const override {
-        const auto sa = m_instance->sampleArea(origin, rng);
-        if (sa.isInvalid())
+        auto sa = m_instance->sampleArea(origin, rng);
+        if (sa.isInvalid()) [[unlikely]]
             return DirectLightSample::invalid();
 
         auto xxp = Vector(sa.position - origin);
@@ -26,8 +29,8 @@ public:
         auto len2 = xxp.lengthSquared();
         auto len = xxp.length();
 
-        const auto emission = m_instance.get()->emission()->evaluate(sa.uv, wo);
-        if (emission.isInvalid())
+        auto emission = m_instance.get()->emission()->evaluate(sa.uv, wo);
+        if (emission.isInvalid()) [[unlikely]]
             return DirectLightSample::invalid();
 
         return {

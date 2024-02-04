@@ -76,10 +76,10 @@
     <instance id="lamp">
         <shape type="rectangle" />
         <emission type="lambertian">
-            <texture name="emission" type="constant" value="2" />
+            <texture name="emission" type="constant" value="8" />
         </emission>
         <transform>
-            <scale value="0.9" />
+            <scale value="0.5" />
             <rotate axis="1,0,0" angle="-90" />
             <translate y="-0.98" />
         </transform>
@@ -131,8 +131,8 @@
     <sampler type="independent" count="256" />
 </integrator>
 
-<!-- <integrator type="mispathtracer" depth="2">
+<integrator type="mispathtracer" depth="6">
     <image id="terminator_bunny_mis" />
     <ref id="scene" />
     <sampler type="independent" count="256" />
-</integrator> -->
+</integrator>
