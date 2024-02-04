@@ -11,7 +11,7 @@
         </transform>
     </camera>
 
-    <light type="envmap">
+    <light type="envmap" improved_sampling="true">
         <texture type="image" filename="../textures/hdri_dot2.png" exposure="2.0" />
     </light>
 

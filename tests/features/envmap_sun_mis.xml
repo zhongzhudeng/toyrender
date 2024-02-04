@@ -11,7 +11,7 @@
         </transform>
     </camera>
 
-    <light type="envmap">
+    <light type="envmap" improved_sampling="true">
         <texture type="image" filename="../textures/autumn_field_1k.exr" exposure="0.5" />
     </light>
 

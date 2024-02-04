@@ -11,7 +11,7 @@
         </transform>
     </camera>
 
-    <light type="envmap" test="1.0,0.0">
+    <light type="envmap" improved_sampling="true">
         <texture type="image" filename="../textures/kloofendal_overcast_1k.hdr" exposure="0.5" />
     </light>
 

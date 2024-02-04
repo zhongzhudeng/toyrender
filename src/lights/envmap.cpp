@@ -5,6 +5,7 @@
 #include "lightwave/sampler.hpp"
 #include "lightwave/texture.hpp"
 #include "lightwave/transform.hpp"
+#include "lightwave/warp.hpp"
 
 namespace lightwave {
 
@@ -34,20 +35,25 @@ inline Vector to_cartisian(Point2 &uv) {
 
 class EnvironmentMap final : public BackgroundLight {
     /// @brief The texture to use as background
-    const cref<Texture> m_texture;
+    cref<Texture> m_texture;
 
     /// @brief An optional transform from local-to-world space
     const cref<Transform> m_transform;
 
+    const bool m_improved_sampling;
     ScalarImage m_scalar;
     Distribution2D m_distr;
 
 public:
     EnvironmentMap(const Properties &properties)
         : m_texture(properties.getChild<Texture>()),
-          m_transform(properties.getOptionalChild<Transform>()) {
-        m_scalar = m_texture->scalar();
-        m_distr = Distribution2D(m_scalar);
+          m_transform(properties.getOptionalChild<Transform>()),
+          m_improved_sampling(
+              properties.get<bool>("improved_sampling", false)) {
+        if (m_improved_sampling) {
+            m_scalar = m_texture->scalar();
+            m_distr = Distribution2D(m_scalar);
+        }
     }
 
     BackgroundLightEval evaluate(const Vector &direction) const override {
@@ -56,41 +62,59 @@ public:
             local = m_transform->inverse(local).normalized();
         Point2 uv = to_uv(local);
         auto e = m_texture->evaluate(uv);
-        uv.y() = 1 - uv.y();
-        auto pdf = m_distr.pdf(uv);
-        float theta = uv.y() * Pi;
-        float sinTheta = std::sin(theta);
-        if (pdf < 1e-6)
-            e = Color::black();
 
-        return {
-            .value = e,
-            .pdf = pdf / (2 * Pi * Pi),
-            .sinTheta = sinTheta,
-        };
+        if (m_improved_sampling) {
+            uv.y() = 1 - uv.y();
+            auto pdf = m_distr.pdf(uv);
+            float theta = uv.y() * Pi;
+            float sinTheta = std::sin(theta);
+            if (pdf < 1e-6)
+                e = Color::black();
+
+            return {
+                .value = e,
+                .pdf = pdf / (2 * Pi * Pi),
+                .sinTheta = sinTheta,
+            };
+        } else {
+            return {.value = e, .pdf = 1, .sinTheta = 1};
+        }
     }
     DirectLightSample sampleDirect(const Point &origin,
                                    Sampler &rng) const override {
-        auto s = m_distr.sampleContinous(rng);
-        auto uv = s.uv;
-        float theta = uv.y() * Pi;
-        float sinTheta = std::sin(theta);
-        uv.y() = 1 - uv.y();
-        auto wi = to_cartisian(uv);
-        if (m_transform)
-            wi = m_transform->apply(wi);
-        auto e = m_texture->evaluate(uv);
-        auto w = e * 2 * Pi * Pi * sinTheta / s.pdf;
-        if (s.pdf < 1e-6)
-            w = Color::black();
+        if (m_improved_sampling) {
+            auto s = m_distr.sampleContinous(rng);
+            auto uv = s.uv;
+            float theta = uv.y() * Pi;
+            float sinTheta = std::sin(theta);
+            uv.y() = 1 - uv.y();
+            auto wi = to_cartisian(uv);
+            if (m_transform)
+                wi = m_transform->apply(wi);
+            auto e = m_texture->evaluate(uv);
+            auto w = e * 2 * Pi * Pi * sinTheta / s.pdf;
+            if (s.pdf < 1e-6)
+                w = Color::black();
 
-        return {
-            .wi = wi,
-            .weight = w,
-            .distance = Infinity,
-            .pdf = s.pdf / (2 * Pi * Pi),
-            .cosTheta_o = sinTheta,
-        };
+            return {
+                .wi = wi,
+                .weight = w,
+                .distance = Infinity,
+                .pdf = s.pdf / (2 * Pi * Pi),
+                .cosTheta_o = sinTheta,
+            };
+        } else {
+            Vector direction = squareToUniformSphere(rng.next2D());
+            auto E = evaluate(direction);
+
+            return {
+                .wi = direction,
+                .weight = E.value / Inv4Pi,
+                .distance = Infinity,
+                .pdf = 1,
+                .cosTheta_o = 1,
+            };
+        }
     }
 
     std::string toString() const override {

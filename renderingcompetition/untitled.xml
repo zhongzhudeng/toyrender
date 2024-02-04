@@ -1,0 +1,189 @@
+<scene id="scene">
+  <camera type="thinlens">
+    <integer name="width" value="1920" />
+    <integer name="height" value="1080" />
+    <float name="fov" value="23.913" />
+    <string name="fovAxis" value="x" />
+    <float name="lensRadius" value="0.05" />
+    <float name="focalDistance" value="1.72" />
+    <transform>
+      <matrix
+        value="0.99999,-0.00017153,0.0038011,0.33175,  -0.0038049,-0.045197,0.99897,-1.6639,  4.4685e-07,-0.99898,-0.045197,0.23572,  0,0,0,1" />
+    </transform>
+  </camera>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="constant" value="0.033105,0.068478,0.10224" />
+      <texture name="roughness" type="constant" value="0.3" />
+      <texture name="metallic" type="constant" value="0" />
+      <texture name="specular" type="constant" value="0" />
+    </bsdf>
+    <shape type="mesh" filename="meshes/Plane.ply" />
+    <transform>
+      <matrix value="0.75789,0,0,0.26446,  0,0.75789,0,-0.043818,  0,0,0.75789,-0.0018409,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="principled">
+      <texture name="baseColor" type="image"
+        filename="textures/close-up-photo-of-abstract-paint-2983141.jpg" />
+      <texture name="roughness" type="constant" value="0.5" />
+      <texture name="metallic" type="constant" value="0" />
+      <texture name="specular" type="constant" value="0" />
+    </bsdf>
+    <shape type="mesh" filename="meshes/Torus.ply" />
+    <transform>
+      <matrix
+        value="0.26872,0,0,0.34967,  0,-1.1746e-08,-0.26872,0.356,  0,0.26872,-1.1746e-08,0.021114,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <bsdf id="Outer" type="principled">
+      <texture name="baseColor" type="image"
+        filename="textures/orange-abstract-painting-3045825.jpg" />
+      <texture name="roughness" type="constant" value="0.12" />
+      <texture name="metallic" type="constant" value="0" />
+      <texture name="specular" type="constant" value="0" />
+    </bsdf>
+    <shape type="mesh" filename="meshes/_m_0_BowlingBall.ply" />
+    <transform>
+      <matrix value="0.34141,0,0,0.081191,  0,0.34141,0,0.15262,  0,0,0.34141,0.035053,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <bsdf id="plaster white irregular" type="principled">
+      <texture name="baseColor" type="image" filename="textures/plaster white irregular_albedo.jpg" />
+      <texture name="roughness" type="image"
+        filename="textures/plaster white irregular_roughness.jpg" linear="true" />
+      <texture name="metallic" type="image" filename="textures/plaster white irregular_metallic.jpg"
+        linear="true" />
+      <texture name="specular" type="constant" value="0" />
+    </bsdf>
+    <texture name="normal" id="plaster white irregular.000" type="image"
+      filename="textures/plaster white irregular_normal.jpg" linear="true" />
+    <shape type="mesh" filename="meshes/_m_1_BowlingBall.ply" />
+    <transform>
+      <matrix value="0.34141,0,0,0.081191,  0,0.34141,0,0.15262,  0,0,0.34141,0.035053,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <ref id="Outer" />
+    <shape type="mesh" filename="meshes/_m_0_BowlingBall.001.ply" />
+    <transform>
+      <matrix value="0.27913,0,0,0.19212,  0,0.27913,0,0.052673,  0,0,0.27913,0.027974,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <ref id="plaster white irregular" />
+    <ref name="normal" id="plaster white irregular.000" />
+    <shape type="mesh" filename="meshes/_m_1_BowlingBall.001.ply" />
+    <transform>
+      <matrix value="0.27913,0,0,0.19212,  0,0.27913,0,0.052673,  0,0,0.27913,0.027974,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <ref id="Outer" />
+    <shape type="mesh" filename="meshes/_m_0_BowlingBall.002.ply" />
+    <transform>
+      <matrix value="0.27219,0,0,0.49012,  0,0.27219,0,0.18756,  0,0,0.27219,0.027567,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <ref id="plaster white irregular" />
+    <ref name="normal" id="plaster white irregular.000" />
+    <shape type="mesh" filename="meshes/_m_1_BowlingBall.002.ply" />
+    <transform>
+      <matrix value="0.27219,0,0,0.49012,  0,0.27219,0,0.18756,  0,0,0.27219,0.027567,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance>
+    <bsdf type="roughconductor" id="Glossy">
+      <texture type="constant" name="roughness" value="0.05" />
+      <texture name="reflectance" type="constant" value="0.2" />
+    </bsdf>
+    <texture name="normal" type="normal" filename="textures/brick_wall_normal.jpg" />
+    <shape type="mesh" filename="meshes/Cube.003.ply" />
+    <transform>
+      <matrix value="0.077345,0,0,0.33907,  0,0.077345,0,0.10694,  0,0,0.026339,0.024911,  0,0,0,1" />
+    </transform>
+  </instance>
+  <instance id="area2">
+    <shape type="rectangle" />
+    <transform>
+      <matrix value="0.339,0,-0,0.38082,  0,0.339,-0,0.090624,  0,0,-0.12305,0.58928,  0,0,0,1" />
+    </transform>
+    <emission type="lambertian">
+      <texture name="emission" type="constant" value="4.6607,4.6607,4.6607" />
+    </emission>
+  </instance>
+  <light type="area">
+    <ref id="area2" />
+  </light>
+  <instance id="area3">
+    <shape type="sphere" />
+    <transform>
+      <matrix
+        value="0.036259,0.024443,-0.049555,0.86621,  -0.065807,0.12725,0.0019255,0.00019431,  -0.12209,-0.061329,-0.015755,0.25513,  0,0,0,1" />
+    </transform>
+    <emission type="lambertian">
+      <texture name="emission" type="constant" value="7.9983,7.9983,7.9983" />
+    </emission>
+  </instance>
+  <light type="area">
+    <ref id="area3" />
+  </light>
+  <instance id="area4">
+    <shape type="rectangle" />
+    <transform>
+      <matrix value="0.339,0,-0,0.38082,  0,0.339,-0,0.75447,  0,0,-0.12305,0.55649,  0,0,0,1" />
+    </transform>
+    <emission type="lambertian">
+      <texture name="emission" type="constant" value="7.5485,7.5485,7.5485" />
+    </emission>
+  </instance>
+  <light type="area">
+    <ref id="area4" />
+  </light>
+  <instance>
+    <bsdf type="roughdielectric">
+      <texture name="ior" type="constant" value="1.5" />
+      <texture name="transmittance" type="constant" value="0.87434,0.93541,1" />
+      <texture name="reflectance" type="constant" value="0.87434,0.93541,1" />
+      <texture name="roughness" type="constant" value="0.2" />
+    </bsdf>
+    <shape type="mesh" filename="meshes/Sphere.ply" />
+    <transform>
+      <matrix value="0.086968,0,0,0.33765,  0,0.086968,0,0.10798,  0,0,0.086968,0.14036,  0,0,0,1" />
+    </transform>
+  </instance>
+  <light type="envmap">
+    <texture type="constant" value="0.050876,0.050876,0.050876" />
+    <transform>
+      <matrix value="1,0,0,0,  0,0,1,0,  0,-1,0,0,  0,0,0,1" />
+    </transform>
+  </light>
+</scene>
+
+<integrator type="mispathtracer" depth="12">
+  <ref id="scene" />
+  <image id="noisy" />
+  <sampler type="halton" count="1024" />
+</integrator>
+<integrator type="normals">
+  <ref id="scene" />
+  <image id="normals" />
+  <sampler
+    type="halton" count="64" />
+</integrator>
+<integrator type="albedo">
+  <ref id="scene" />
+  <image id="albedo" />
+  <sampler
+    type="halton" count="64" />
+</integrator>
+<postprocess type="denoising">
+  <ref name="input" id="noisy" />
+  <ref name="normals" id="normals" />
+  <ref name="albedo" id="albedo" />
+  <image id="denoised" />
+</postprocess>
